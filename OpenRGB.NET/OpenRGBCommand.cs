@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OpenRGB.NET
+﻿namespace OpenRGB.NET
 {
     public enum OpenRGBCommand
     {

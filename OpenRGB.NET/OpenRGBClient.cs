@@ -11,13 +11,10 @@ namespace OpenRGB.NET
         private readonly string _ip;
         private readonly int _port;
         private readonly string _name;
-        private readonly Socket _socket
-            = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        private readonly Socket _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-        public OpenRGBClient(
-            string ip = "localhost",
-            int port = 1337,
-            string name = "OpenRGB.NET")
+        #region Basic init methods
+        public OpenRGBClient(string ip = "localhost", int port = 1337, string name = "OpenRGB.NET")
         {
             _ip = ip;
             _port = port;
@@ -38,20 +35,10 @@ namespace OpenRGB.NET
         {
             _socket.Disconnect(true);
         }
+        #endregion
 
-        public uint GetControllerCount()
-        {
-            SendMessage(OpenRGBCommand.RequestControllerCount);
-            return BitConverter.ToUInt32(ReadMessage(), 0);
-        }
-
-        public OpenRGBDevice GetControllerData(uint id)
-        {
-            SendMessage(OpenRGBCommand.RequestControllerData, null, id);
-            return OpenRGBDevice.Decode(ReadMessage());
-        }
-
-        public void SendMessage(OpenRGBCommand command, IEnumerable<byte> buffer = null, uint deviceId = 0)
+        #region Basic Comms methods
+        private void SendMessage(OpenRGBCommand command, IEnumerable<byte> buffer = null, uint deviceId = 0)
         {
             //we can send the header right away. it contains the command we are sending
             //and the size of the packet that follows
@@ -79,7 +66,7 @@ namespace OpenRGB.NET
             return;
         }
 
-        public byte[] ReadMessage()
+        private byte[] ReadMessage()
         {
             //we need a byte buffer to store the header
             var headerBuffer = new byte[OpenRGBPacketHeader.Size];
@@ -97,8 +84,24 @@ namespace OpenRGB.NET
 
             return dataBuffer;
         }
+        #endregion
 
-        public void SendColors(uint deviceId, OpenRGBColor[] colors)
+        #region Request Methods
+        public uint GetControllerCount()
+        {
+            SendMessage(OpenRGBCommand.RequestControllerCount);
+            return BitConverter.ToUInt32(ReadMessage(), 0);
+        }
+
+        public OpenRGBDevice GetControllerData(uint id)
+        {
+            SendMessage(OpenRGBCommand.RequestControllerData, null, id);
+            return OpenRGBDevice.Decode(ReadMessage());
+        }
+        #endregion
+
+        #region Update Methods
+        public void UpdateLeds(uint deviceId, OpenRGBColor[] colors)
         {
             //4 bytes of nothing
             //2 bytes for how many colors (sizeof(short)
@@ -124,5 +127,6 @@ namespace OpenRGB.NET
 
             SendMessage(OpenRGBCommand.UpdateLeds, bytes, deviceId);
         }
+        #endregion
     }
 }

@@ -1,9 +1,7 @@
-﻿using System;
+﻿using OpenRGB.NET;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Threading;
-using OpenRGB.NET;
 
 namespace Test
 {
@@ -11,18 +9,18 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            OpenRGBClient openRgb = new OpenRGBClient(port:1338, name: "OpenRGB.NET Test Application");
+            OpenRGBClient openRgb = new OpenRGBClient(port: 1338, name: "OpenRGB.NET Test Application");
             openRgb.Connect();
             var controllerCount = openRgb.GetControllerCount();
             var devices = new List<OpenRGBDevice>();
 
-            for(uint i = 0; i < controllerCount; i++)
+            for (uint i = 0; i < controllerCount; i++)
                 devices.Add(openRgb.GetControllerData(i));
 
             Console.WriteLine("asds");
             var deviceIndex = devices.FindIndex(d => d.name.Contains("G810"));
             var data = devices[deviceIndex];
-            
+
             var list = new List<OpenRGBColor>(data.leds.Length);
             Color clr = Color.Blue;
             for (int i = 0; i < data.leds.Length; i++)
@@ -30,7 +28,7 @@ namespace Test
                 list.Add(new OpenRGBColor(clr.R, clr.G, clr.B));
                 clr = ChangeHue(clr, 0.8);
             }
-            openRgb.SendColors((uint)deviceIndex, list.ToArray());
+            openRgb.UpdateLeds((uint)deviceIndex, list.ToArray());
 
         }
 

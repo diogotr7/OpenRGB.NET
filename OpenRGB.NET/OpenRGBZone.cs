@@ -21,10 +21,10 @@ namespace OpenRGB.NET
         {
             var zones = new List<OpenRGBZone>((int)zoneCount);
 
-            for(int zone = 0; zone < zoneCount; zone++)
+            for (int zone = 0; zone < zoneCount; zone++)
             {
                 var newZone = new OpenRGBZone();
-                
+
                 ushort nameLength = BitConverter.ToUInt16(buffer, offset);
                 offset += sizeof(ushort);
 

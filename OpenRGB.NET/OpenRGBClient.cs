@@ -27,7 +27,11 @@ namespace OpenRGB.NET
         public void Connect()
         {
             _socket.Connect(_ip, _port);
-            SendMessage(OpenRGBCommand.SetClientName, Encoding.ASCII.GetBytes(_name));
+            //null terminate before sending
+            SendMessage(
+                OpenRGBCommand.SetClientName,
+                Encoding.ASCII.GetBytes(_name + '\0')
+            );
         }
 
         public void Disconnect()
@@ -69,7 +73,7 @@ namespace OpenRGB.NET
             else
                 result += _socket.Send(buffer.ToArray());
 
-            if(result != packetSize)
+            if (result != packetSize)
                 throw new Exception("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
 
             return;
@@ -116,7 +120,7 @@ namespace OpenRGB.NET
 
             for (int i = 0; i < ledCount; i++)
                 colors[i].Encode()
-                    .CopyTo(bytes, GetIndex(ledCount));
+                    .CopyTo(bytes, GetIndex(i));
 
             SendMessage(OpenRGBCommand.UpdateLeds, bytes, deviceId);
         }

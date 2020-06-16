@@ -11,7 +11,7 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            OpenRGBClient openRgb = new OpenRGBClient(port:1338);
+            OpenRGBClient openRgb = new OpenRGBClient(port:1338, name: "OpenRGB.NET Test Application");
             openRgb.Connect();
             var controllerCount = openRgb.GetControllerCount();
             var devices = new List<OpenRGBDevice>();
@@ -24,11 +24,11 @@ namespace Test
             var data = devices[deviceIndex];
             
             var list = new List<OpenRGBColor>(data.leds.Length);
-            Color clr = Color.Red;
+            Color clr = Color.Blue;
             for (int i = 0; i < data.leds.Length; i++)
             {
                 list.Add(new OpenRGBColor(clr.R, clr.G, clr.B));
-                clr = ChangeHue(clr, 360 / data.leds.Length);
+                clr = ChangeHue(clr, 0.8);
             }
             openRgb.SendColors((uint)deviceIndex, list.ToArray());
 

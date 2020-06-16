@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenRGB.NET", "OpenRGB.NET\OpenRGB.NET.csproj", "{DADF8D5C-D15D-403D-A249-357E99403C8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{B0BF36E9-D3E1-48D8-8C53-D2D15E42CCA1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DADF8D5C-D15D-403D-A249-357E99403C8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DADF8D5C-D15D-403D-A249-357E99403C8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DADF8D5C-D15D-403D-A249-357E99403C8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DADF8D5C-D15D-403D-A249-357E99403C8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0BF36E9-D3E1-48D8-8C53-D2D15E42CCA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0BF36E9-D3E1-48D8-8C53-D2D15E42CCA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0BF36E9-D3E1-48D8-8C53-D2D15E42CCA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0BF36E9-D3E1-48D8-8C53-D2D15E42CCA1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FF271C1E-2D02-4DA0-A393-FC199AE8DC98}
+	EndGlobalSection
+EndGlobal

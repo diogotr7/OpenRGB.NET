@@ -11,7 +11,7 @@ namespace OpenRGB.NET
         private readonly string _ip;
         private readonly int _port;
         private readonly string _name;
-        private readonly Socket _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        private Socket _socket;
 
         #region Basic init methods
         public OpenRGBClient(string ip = "localhost", int port = 1337, string name = "OpenRGB.NET")
@@ -23,6 +23,7 @@ namespace OpenRGB.NET
 
         public void Connect()
         {
+            _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             _socket.Connect(_ip, _port);
             //null terminate before sending
             SendMessage(
@@ -33,7 +34,9 @@ namespace OpenRGB.NET
 
         public void Disconnect()
         {
-            _socket.Disconnect(true);
+            _socket.Disconnect(false);
+            _socket.Dispose();
+            _socket = null;
         }
         #endregion
 

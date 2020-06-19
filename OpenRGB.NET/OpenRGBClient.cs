@@ -90,29 +90,35 @@ namespace OpenRGB.NET
         #endregion
 
         #region Request Methods
-        public uint GetControllerCount()
+        public int GetControllerCount()
         {
             SendMessage(OpenRGBCommand.RequestControllerCount);
-            return BitConverter.ToUInt32(ReadMessage(), 0);
+            return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
-        public OpenRGBDevice GetControllerData(uint id)
+        public OpenRGBDevice GetControllerData(int id)
         {
-            SendMessage(OpenRGBCommand.RequestControllerData, null, id);
+            if (id < 0)
+                throw new ArgumentException(nameof(id));
+
+            SendMessage(OpenRGBCommand.RequestControllerData, null, (uint)id);
             return OpenRGBDevice.Decode(ReadMessage());
         }
         #endregion
 
         #region Update Methods
-        public void UpdateLeds(uint deviceId, OpenRGBColor[] colors)
+        public void UpdateLeds(int deviceId, OpenRGBColor[] colors)
         {
+            if (colors is null)
+                throw new ArgumentNullException(nameof(colors));
+
+            if (deviceId < 0)
+                throw new ArgumentException(nameof(deviceId));
+
             //4 bytes of nothing
             //2 bytes for how many colors (sizeof(short)
             //4 bytes for each led
             int GetIndex(int a) => 4 + 2 + (4 * a);
-
-            if (colors is null)
-                throw new ArgumentNullException(nameof(colors));
 
             var ledCount = colors.Length;
             var bytes = new byte[GetIndex(ledCount)];
@@ -128,7 +134,7 @@ namespace OpenRGB.NET
                 colors[i].Encode()
                     .CopyTo(bytes, GetIndex(i));
 
-            SendMessage(OpenRGBCommand.UpdateLeds, bytes, deviceId);
+            SendMessage(OpenRGBCommand.UpdateLeds, bytes, (uint)deviceId);
         }
         #endregion
     }

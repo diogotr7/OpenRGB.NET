@@ -17,19 +17,19 @@ namespace Test
             for (uint i = 0; i < controllerCount; i++)
                 devices.Add(openRgb.GetControllerData(i));
 
-            Console.WriteLine("asds");
-            var deviceIndex = devices.FindIndex(d => d.name.Contains("G810"));
-            var data = devices[deviceIndex];
-
-            var list = new List<OpenRGBColor>(data.leds.Length);
-            Color clr = Color.Blue;
-            for (int i = 0; i < data.leds.Length; i++)
+            for(uint i = 0; i < devices.Count; i++)
             {
-                list.Add(new OpenRGBColor(clr.R, clr.G, clr.B));
-                clr = ChangeHue(clr, 0.8);
-            }
-            openRgb.UpdateLeds((uint)deviceIndex, list.ToArray());
+                var data = devices[(int)i];
 
+                var list = new List<OpenRGBColor>(data.leds.Length);
+                Color clr = Color.Red;
+                for (int j = 0; j < data.leds.Length; j++)
+                {
+                    list.Add(new OpenRGBColor(clr.R, clr.G, clr.B));
+                    clr = ChangeHue(clr, 360 / data.leds.Length);
+                }
+                openRgb.UpdateLeds((uint)i, list.ToArray());
+            }
         }
 
         public static void ToHsv(Color color, out double hue, out double saturation, out double value)

@@ -4,26 +4,26 @@ namespace OpenRGB.NET
 {
     public class OpenRGBMatrixMap
     {
-        public uint height;
-        public uint width;
-        public uint[] map;
+        public uint Height;
+        public uint Width;
+        public uint[,] Matrix;
 
-        public static OpenRGBMatrixMap Decode(byte[] buffer, ref int offset, ushort zoneMatrixLength)
+        public static OpenRGBMatrixMap Decode(byte[] buffer, ref int offset)
         {
             var matx = new OpenRGBMatrixMap();
 
-            matx.height = BitConverter.ToUInt32(buffer, offset);
-            offset += sizeof(uint);
+            matx.Height = BufferReader.GetUInt32(buffer, ref offset);
 
-            matx.width = BitConverter.ToUInt32(buffer, offset);
-            offset += sizeof(uint);
+            matx.Width = BufferReader.GetUInt32(buffer, ref offset);
 
-            matx.map = new uint[matx.width * matx.height];
+            matx.Matrix = new uint[matx.Height, matx.Width];
 
-            for (int matrix_idx = 0; matrix_idx < (matx.height * matx.width); matrix_idx++)
+            for (int i = 0; i < matx.Height; i++)
             {
-                matx.map[matrix_idx] = BitConverter.ToUInt32(buffer, offset);
-                offset += sizeof(uint);
+                for (int j = 0; j < matx.Width; j++)
+                {
+                    matx.Matrix[i, j] = BufferReader.GetUInt32(buffer, ref offset);
+                }
             }
 
             return matx;

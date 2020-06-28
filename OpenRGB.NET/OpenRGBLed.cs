@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 
 namespace OpenRGB.NET
@@ -11,30 +12,23 @@ namespace OpenRGB.NET
 
         public static OpenRGBLed[] Decode(byte[] buffer, ref int offset, ushort ledCount)
         {
-            var leds = new List<OpenRGBLed>(ledCount);
+            var leds = new OpenRGBLed[ledCount];
 
             for (int led = 0; led < ledCount; led++)
             {
-                var newLed = new OpenRGBLed();
-
-                ushort ledNameLength = BitConverter.ToUInt16(buffer, offset);
-                offset += sizeof(ushort);
-
-                newLed.Name = Encoding.ASCII.GetString(buffer, offset, ledNameLength - 1);
-                offset += ledNameLength;
-
-                newLed.Value = BitConverter.ToUInt32(buffer, offset);
-                offset += sizeof(uint);
-
-                leds.Add(newLed);
+                leds[led] = new OpenRGBLed
+                {
+                    Name = BufferReader.GetString(buffer, ref offset),
+                    Value = BufferReader.GetUInt32(buffer, ref offset)
+                };
             }
 
-            return leds.ToArray();
+            return leds;
         }
 
         public override string ToString()
         {
-            return Name ?? "";
+            return $"Name: {Name}, Value: {Value}";
         }
     }
 }

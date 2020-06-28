@@ -1,21 +1,20 @@
-﻿using System;
+﻿using OpenRGB.NET.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace OpenRGB.NET
 {
-
     public class OpenRGBZone
     {
-        public string name;
-        public uint type;
-        public OpenRGBLed[] leds;
-        public OpenRGBColor[] colors;
-        public uint startIndex;
-        public uint ledsCount;
-        public uint ledsMin;
-        public uint ledsMax;
-        public OpenRGBMatrixMap matrixMap;
+        public string Name;
+        public OpenRGBZoneType Type;
+        public OpenRGBLed[] Leds;
+        public OpenRGBColor[] Colors;
+        public uint LedCount;
+        public uint LedsMin;
+        public uint LedsMax;
+        public OpenRGBMatrixMap MatrixMap;
 
         public static OpenRGBZone[] Decode(byte[] buffer, ref int offset, ushort zoneCount)
         {
@@ -25,31 +24,22 @@ namespace OpenRGB.NET
             {
                 var newZone = new OpenRGBZone();
 
-                ushort nameLength = BitConverter.ToUInt16(buffer, offset);
-                offset += sizeof(ushort);
+                newZone.Name = BufferReader.GetString(buffer, ref offset);
 
-                newZone.name = Encoding.ASCII.GetString(buffer, offset, nameLength - 1);
-                offset += nameLength;
+                newZone.Type = (OpenRGBZoneType)BufferReader.GetUInt32(buffer, ref offset);
 
-                newZone.type = BitConverter.ToUInt32(buffer, offset);
-                offset += sizeof(uint);
+                newZone.LedsMin = BufferReader.GetUInt32(buffer, ref offset);
 
-                newZone.ledsMin = BitConverter.ToUInt32(buffer, offset);
-                offset += sizeof(uint);
+                newZone.LedsMax = BufferReader.GetUInt32(buffer, ref offset);
 
-                newZone.ledsMax = BitConverter.ToUInt32(buffer, offset);
-                offset += sizeof(uint);
+                newZone.LedCount = BufferReader.GetUInt32(buffer, ref offset);
 
-                newZone.ledsCount = BitConverter.ToUInt32(buffer, offset);
-                offset += sizeof(uint);
-
-                ushort zoneMatrixLength = BitConverter.ToUInt16(buffer, offset);
-                offset += sizeof(ushort);
+                var zoneMatrixLength = BufferReader.GetUInt16(buffer, ref offset);
 
                 if (zoneMatrixLength > 0)
-                    newZone.matrixMap = OpenRGBMatrixMap.Decode(buffer, ref offset, zoneMatrixLength);
+                    newZone.MatrixMap = OpenRGBMatrixMap.Decode(buffer, ref offset);
                 else
-                    newZone.matrixMap = null;
+                    newZone.MatrixMap = null;
 
                 zones.Add(newZone);
             }

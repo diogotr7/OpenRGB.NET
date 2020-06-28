@@ -14,7 +14,7 @@ namespace OpenRGB.NET
         private Socket _socket;
 
         #region Basic init methods
-        public OpenRGBClient(string ip = "localhost", int port = 1337, string name = "OpenRGB.NET")
+        public OpenRGBClient(string ip = "localhost", int port = 6742, string name = "OpenRGB.NET")
         {
             _ip = ip;
             _port = port;

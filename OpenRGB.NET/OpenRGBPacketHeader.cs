@@ -10,13 +10,13 @@ namespace OpenRGB.NET
 
         public uint DeviceId;
         public uint Command;
-        public uint Length;
+        public uint DataLength;
 
-        public OpenRGBPacketHeader(uint deviceId, uint comman, uint length)
+        public OpenRGBPacketHeader(uint deviceId, uint command, uint length)
         {
             DeviceId = deviceId;
-            Command = comman;
-            Length = length;
+            Command = command;
+            DataLength = length;
         }
 
         internal byte[] Encode()
@@ -26,7 +26,7 @@ namespace OpenRGB.NET
             ret.AddRange(Encoding.ASCII.GetBytes("ORGB"));
             ret.AddRange(BitConverter.GetBytes(DeviceId));
             ret.AddRange(BitConverter.GetBytes(Command));
-            ret.AddRange(BitConverter.GetBytes(Length));
+            ret.AddRange(BitConverter.GetBytes(DataLength));
 
             return ret.ToArray();
         }

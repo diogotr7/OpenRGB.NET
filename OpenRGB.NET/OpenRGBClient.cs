@@ -47,8 +47,7 @@ namespace OpenRGB.NET
             //and the size of the packet that follows
             var packetSize = buffer?.Count() ?? 0;
             var result = _socket.Send(
-                new OpenRGBPacketHeader(deviceId, (uint)command, (uint)packetSize)
-                .Encode()
+                new OpenRGBPacketHeader(deviceId, (uint)command, (uint)packetSize).Encode()
             );
 
             if (result != OpenRGBPacketHeader.Size)
@@ -59,9 +58,9 @@ namespace OpenRGB.NET
 
             result = 0;
             if (buffer is byte[] arr)
-                result += _socket.Send(arr);
+                result = _socket.Send(arr);
             else
-                result += _socket.Send(buffer.ToArray());
+                result = _socket.Send(buffer.ToArray());
 
             if (result != packetSize)
                 throw new Exception("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
@@ -77,12 +76,12 @@ namespace OpenRGB.NET
             _socket.Receive(headerBuffer, OpenRGBPacketHeader.Size, SocketFlags.None);
             //and decode it into a header to know how many bytes we will receive next
             var header = OpenRGBPacketHeader.Decode(headerBuffer);
-            if (header.Length <= 0)
+            if (header.DataLength <= 0)
                 throw new Exception("Length of header was zero");
 
             //we then make a buffer that will receive the data
-            var dataBuffer = new byte[header.Length];
-            if (_socket.Receive(dataBuffer, (int)header.Length, SocketFlags.None) != header.Length)
+            var dataBuffer = new byte[header.DataLength];
+            if (_socket.Receive(dataBuffer, (int)header.DataLength, SocketFlags.None) != header.DataLength)
                 throw new Exception("Received wrong amount of bytes in " + nameof(ReadMessage));
 
             return dataBuffer;
@@ -116,7 +115,7 @@ namespace OpenRGB.NET
                 throw new ArgumentException(nameof(deviceId));
 
             //4 bytes of nothing
-            //2 bytes for how many colors (sizeof(short)
+            //2 bytes for how many colors (sizeof(short))
             //4 bytes for each led
             int GetIndex(int a) => 4 + 2 + (4 * a);
 

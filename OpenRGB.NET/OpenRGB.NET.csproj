@@ -2,6 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.0.0</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Diogo Trindade</Authors>
+    <Company>Diogo Trindade</Company>
+    <Description>Client for the OpenRGB SDK</Description>
+    <Copyright>Copyright © 2020 Diogo Trindade</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/diogotr7/OpenRGB.NET</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/diogotr7/OpenRGB.NET</RepositoryUrl>
+    <PackageTags>openrgb, rgb, sdk, client</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

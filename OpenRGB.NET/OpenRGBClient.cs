@@ -6,12 +6,13 @@ using System.Text;
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBClient
+    public class OpenRGBClient : IDisposable
     {
         private readonly string _ip;
         private readonly int _port;
         private readonly string _name;
         private Socket _socket;
+        private bool disposed;
 
         #region Basic init methods
         public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET")
@@ -19,6 +20,7 @@ namespace OpenRGB.NET
             _ip = ip;
             _port = port;
             _name = name;
+            if (autoconnect) Connect();
         }
 
         public void Connect()
@@ -135,6 +137,33 @@ namespace OpenRGB.NET
 
             SendMessage(OpenRGBCommand.UpdateLeds, bytes, (uint)deviceId);
         }
+
+        
+
+        #endregion
+
+        #region Dispose
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    // Managed object only
+                    _socket.Dispose();
+                    disposed = true;
+                }
+                
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
         #endregion
     }
 }

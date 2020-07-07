@@ -1,6 +1,5 @@
 using System;
 using Xunit;
-using OpenRGB.NET;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Diagnostics;

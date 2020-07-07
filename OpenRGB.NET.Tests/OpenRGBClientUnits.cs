@@ -11,7 +11,7 @@ namespace OpenRGB.NET.Test
         [Fact]
         public void ClientConnectToServer()
         {
-            OpenRGBClient client = new OpenRGBClient(port: 1337);
+            OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: ClientConnectToServer");
             client.Connect();
             client.Disconnect();
         }
@@ -19,7 +19,7 @@ namespace OpenRGB.NET.Test
         [Fact]
         public void ListController()
         {
-            OpenRGBClient client = new OpenRGBClient(port: 1337);
+            OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: ListController");
             client.Connect();
             int nbController = client.GetControllerCount();
             for (int i = 0; i < nbController; i++)
@@ -33,7 +33,7 @@ namespace OpenRGB.NET.Test
         [Fact]
         public void CheckLedChange()
         {
-            OpenRGBClient client = new OpenRGBClient(port: 1337, name: "OpenRGB.NET Test Application");
+            OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: CheckLedChange");
             client.Connect();
             var controllerCount = client.GetControllerCount();
             var devices = new List<OpenRGBDevice>();

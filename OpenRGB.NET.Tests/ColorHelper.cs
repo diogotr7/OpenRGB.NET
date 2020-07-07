@@ -1,23 +1,22 @@
 ﻿using System;
-using System.Drawing;
 
 namespace OpenRGB.NET.Test
 {
     public static class ColorHelper
     {
-        public static void ToHsv(Color color, out double hue, out double saturation, out double value)
+        public static void ToHsv(OpenRGBColor clr, out double hue, out double saturation, out double value)
         {
-            var max = Math.Max(color.R, Math.Max(color.G, color.B));
-            var min = Math.Min(color.R, Math.Min(color.G, color.B));
+            var max = Math.Max(clr.Red, Math.Max(clr.Green, clr.Blue));
+            var min = Math.Min(clr.Red, Math.Min(clr.Green, clr.Blue));
 
             var delta = max - min;
 
             hue = 0d;
             if (delta != 0)
             {
-                if (color.R == max) hue = (color.G - color.B) / (double)delta;
-                else if (color.G == max) hue = 2d + (color.B - color.R) / (double)delta;
-                else if (color.B == max) hue = 4d + (color.R - color.G) / (double)delta;
+                if (clr.Red == max) hue = (clr.Green - clr.Blue) / (double)delta;
+                else if (clr.Green == max) hue = 2d + (clr.Blue - clr.Red) / (double)delta;
+                else if (clr.Blue == max) hue = 4d + (clr.Red - clr.Green) / (double)delta;
             }
 
             hue *= 60;
@@ -27,7 +26,7 @@ namespace OpenRGB.NET.Test
             value = max / 255d;
         }
 
-        public static Color FromHsv(double hue, double saturation, double value)
+        public static OpenRGBColor FromHsv(double hue, double saturation, double value)
         {
             saturation = Math.Max(Math.Min(saturation, 1), 0);
             value = Math.Max(Math.Min(value, 1), 0);
@@ -41,23 +40,23 @@ namespace OpenRGB.NET.Test
             var q = (byte)(value * (1 - f * saturation));
             var t = (byte)(value * (1 - (1 - f) * saturation));
 
-            switch (hi)
+            return hi switch
             {
-                case 0: return Color.FromArgb(v, t, p);
-                case 1: return Color.FromArgb(q, v, p);
-                case 2: return Color.FromArgb(p, v, t);
-                case 3: return Color.FromArgb(p, q, v);
-                case 4: return Color.FromArgb(t, p, v);
-                default: return Color.FromArgb(v, p, q);
-            }
+                0 => new OpenRGBColor(v, t, p),
+                1 => new OpenRGBColor(q, v, p),
+                2 => new OpenRGBColor(p, v, t),
+                3 => new OpenRGBColor(p, q, v),
+                4 => new OpenRGBColor(t, p, v),
+                _ => new OpenRGBColor(v, p, q),
+            };
         }
 
-        public static Color ChangeHue(Color color, double offset)
+        public static OpenRGBColor ChangeHue(this OpenRGBColor OpenRGBColor, double offset)
         {
             if (offset == 0)
-                return color;
+                return OpenRGBColor;
 
-            ToHsv(color, out var hue, out var saturation, out var value);
+            ToHsv(OpenRGBColor, out var hue, out var saturation, out var value);
 
             hue += offset;
 

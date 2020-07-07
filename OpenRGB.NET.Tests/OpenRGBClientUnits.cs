@@ -85,17 +85,25 @@ namespace OpenRGB.NET.Test
 
             for (int i = 0; i < devices.Count; i++)
             {
-                var data = devices[i];
+                var device = devices[i];
 
-                var list = new OpenRGBColor[data.Leds.Length];
-                Color clr = Color.Lime;
-                for (int j = 0; j < data.Leds.Length; j++)
+                var originalColors = new OpenRGBColor[device.Leds.Length];
+
+                var clr = new OpenRGBColor(0, 0, 255);
+                var hueIncrement = 360.0 / device.Leds.Length;
+
+                for (int j = 0; j < device.Leds.Length; j++)
                 {
-                    list[j] = new OpenRGBColor(clr.R, clr.G, clr.B);
-                    clr = ColorHelper.ChangeHue(clr, (360.0 / 2.0) / data.Leds.Length);
+                    originalColors[j] = new OpenRGBColor(clr);
+                    clr = clr.ChangeHue(hueIncrement);
                 }
-                client.UpdateLeds(i, list);
+
+                client.UpdateLeds(i, originalColors);
+                var updatedColors = client.GetControllerData(i).Colors;
+
+                Assert.True(updatedColors.SequenceEqual(originalColors));
             }
+
             client.Disconnect();
             sw.Stop();
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");

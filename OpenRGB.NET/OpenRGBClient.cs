@@ -11,36 +11,36 @@ namespace OpenRGB.NET
         private readonly string _ip;
         private readonly int _port;
         private readonly string _name;
-        private Socket _socket;
+        private readonly Socket _socket;
         private bool disposed;
 
+        public bool Connected => _socket?.Connected ?? false;
+
         #region Basic init methods
-        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = false)
+        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true)
         {
             _ip = ip;
             _port = port;
             _name = name;
+            _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
             if (autoconnect) Connect();
         }
 
         public void Connect()
         {
-            _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            if (disposed)
+                throw new ObjectDisposedException(nameof(_socket));
+
+            if (Connected)
+                return;
+
             _socket.Connect(_ip, _port);
             //null terminate before sending
             SendMessage(
                 OpenRGBCommand.SetClientName,
                 Encoding.ASCII.GetBytes(_name + '\0')
             );
-        }
-
-        public void Disconnect()
-        {
-            if (_socket != null && _socket.Connected) {
-                _socket.Disconnect(false);
-                _socket.Dispose();
-                _socket = null;
-            }
         }
         #endregion
 
@@ -95,12 +95,18 @@ namespace OpenRGB.NET
         #region Request Methods
         public int GetControllerCount()
         {
+            if (disposed)
+                throw new ObjectDisposedException(nameof(_socket));
+
             SendMessage(OpenRGBCommand.RequestControllerCount);
             return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
         public OpenRGBDevice GetControllerData(int id)
         {
+            if (disposed)
+                throw new ObjectDisposedException(nameof(_socket));
+
             if (id < 0)
                 throw new ArgumentException(nameof(id));
 
@@ -112,6 +118,9 @@ namespace OpenRGB.NET
         #region Update Methods
         public void UpdateLeds(int deviceId, OpenRGBColor[] colors)
         {
+            if (disposed)
+                throw new ObjectDisposedException(nameof(_socket));
+
             if (colors is null)
                 throw new ArgumentNullException(nameof(colors));
 
@@ -139,13 +148,9 @@ namespace OpenRGB.NET
 
             SendMessage(OpenRGBCommand.UpdateLeds, bytes, (uint)deviceId);
         }
-
-        
-
         #endregion
 
         #region Dispose
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
@@ -153,10 +158,13 @@ namespace OpenRGB.NET
                 if (disposing)
                 {
                     // Managed object only
-                    Disconnect();
+                    if (_socket != null && _socket.Connected)
+                    {
+                        _socket?.Disconnect(false);
+                        _socket?.Dispose();
+                    }
                     disposed = true;
                 }
-                
             }
         }
 
@@ -165,7 +173,6 @@ namespace OpenRGB.NET
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
         #endregion
     }
 }

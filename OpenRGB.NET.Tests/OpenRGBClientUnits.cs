@@ -24,7 +24,7 @@ namespace OpenRGB.NET.Test
         /// <summary>
         /// Will be executed after every test
         /// </summary>
-        public void Dispose(){}
+        public void Dispose() { }
 
         [Fact]
         public void ClientConnectToServer()
@@ -32,7 +32,7 @@ namespace OpenRGB.NET.Test
             Stopwatch sw = Stopwatch.StartNew();
             OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: ClientConnectToServer");
             client.Connect();
-            client.Disconnect();
+            client.Dispose();
             sw.Stop();
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
         }
@@ -42,14 +42,15 @@ namespace OpenRGB.NET.Test
         {
             Stopwatch sw = Stopwatch.StartNew();
             OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: ListController");
-            client.Connect();
+
             int nbController = client.GetControllerCount();
             for (int i = 0; i < nbController; i++)
             {
                 OpenRGBDevice controller = client.GetControllerData(i);
                 Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
             }
-            client.Disconnect();
+
+            client.Dispose();
             sw.Stop();
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
         }
@@ -76,7 +77,6 @@ namespace OpenRGB.NET.Test
         {
             Stopwatch sw = Stopwatch.StartNew();
             OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: CheckLedChange");
-            client.Connect();
             var controllerCount = client.GetControllerCount();
             var devices = new List<OpenRGBDevice>();
 
@@ -104,8 +104,19 @@ namespace OpenRGB.NET.Test
                 Assert.True(updatedColors.SequenceEqual(originalColors));
             }
 
-            client.Disconnect();
+            client.Dispose();
             sw.Stop();
+            Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
+        }
+
+        [Fact]
+        public void UseAfterDispose()
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            var client = new OpenRGBClient();
+            client.Dispose();
+
+            Assert.Throws<ObjectDisposedException>(() => client.GetControllerCount());
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
         }
 
@@ -113,9 +124,9 @@ namespace OpenRGB.NET.Test
         {
             for (int i = 0; i < nbDryRun; i++)
             {
-                using OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: DryRun", autoconnect: true);
+                using OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: DryRun");
                 int nbController = client.GetControllerCount();
-                for (int j = 0; i < nbController; i++)
+                for (int j = 0; j < nbController; j++)
                 {
                     OpenRGBDevice controller = client.GetControllerData(j);
                     Assert.True(!string.IsNullOrWhiteSpace(controller.Name));

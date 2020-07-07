@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace Test
+namespace OpenRGB.NET.Test
 {
     public static class ColorHelper
     {

@@ -12,16 +12,18 @@ namespace OpenRGB.NET
         private readonly int _port;
         private readonly string _name;
         private readonly Socket _socket;
+        private readonly int _timeout;
         private bool disposed;
 
         public bool Connected => _socket?.Connected ?? false;
 
         #region Basic init methods
-        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true)
+        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000)
         {
             _ip = ip;
             _port = port;
             _name = name;
+            _timeout = timeout;
             _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             if (autoconnect) Connect();
@@ -29,13 +31,23 @@ namespace OpenRGB.NET
 
         public void Connect()
         {
-            if (disposed)
-                throw new ObjectDisposedException(nameof(_socket));
-
             if (Connected)
                 return;
 
-            _socket.Connect(_ip, _port);
+            IAsyncResult result = _socket.BeginConnect(_ip, _port, null, null);
+
+            result.AsyncWaitHandle.WaitOne(_timeout);
+
+            if (_socket.Connected)
+            {
+                _socket.EndConnect(result);
+            }
+            else
+            {
+                _socket.Close();
+                throw new TimeoutException("Failed to connect to server.");
+            }
+
             //null terminate before sending
             SendMessage(
                 OpenRGBCommand.SetClientName,
@@ -95,18 +107,12 @@ namespace OpenRGB.NET
         #region Request Methods
         public int GetControllerCount()
         {
-            if (disposed)
-                throw new ObjectDisposedException(nameof(_socket));
-
             SendMessage(OpenRGBCommand.RequestControllerCount);
             return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
         public OpenRGBDevice GetControllerData(int id)
         {
-            if (disposed)
-                throw new ObjectDisposedException(nameof(_socket));
-
             if (id < 0)
                 throw new ArgumentException(nameof(id));
 
@@ -118,9 +124,6 @@ namespace OpenRGB.NET
         #region Update Methods
         public void UpdateLeds(int deviceId, OpenRGBColor[] colors)
         {
-            if (disposed)
-                throw new ObjectDisposedException(nameof(_socket));
-
             if (colors is null)
                 throw new ArgumentNullException(nameof(colors));
 
@@ -143,8 +146,7 @@ namespace OpenRGB.NET
                 .CopyTo(bytes, 4);
 
             for (int i = 0; i < ledCount; i++)
-                colors[i].Encode()
-                    .CopyTo(bytes, GetIndex(i));
+                colors[i].Encode().CopyTo(bytes, GetIndex(i));
 
             SendMessage(OpenRGBCommand.UpdateLeds, bytes, (uint)deviceId);
         }

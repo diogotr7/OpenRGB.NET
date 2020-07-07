@@ -36,9 +36,11 @@ namespace OpenRGB.NET
 
         public void Disconnect()
         {
-            _socket.Disconnect(false);
-            _socket.Dispose();
-            _socket = null;
+            if (_socket != null && _socket.Connected) {
+                _socket.Disconnect(false);
+                _socket.Dispose();
+                _socket = null;
+            }
         }
         #endregion
 

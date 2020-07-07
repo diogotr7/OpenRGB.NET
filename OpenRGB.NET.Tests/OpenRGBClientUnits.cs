@@ -17,7 +17,7 @@ namespace OpenRGB.NET.Test
         }
 
         [Fact]
-        public void ClientListController()
+        public void ListController()
         {
             OpenRGBClient client = new OpenRGBClient(port: 1337);
             client.Connect();
@@ -50,6 +50,7 @@ namespace OpenRGB.NET.Test
                 for (int j = 0; j < data.Leds.Length; j++)
                 {
                     list[j] = new OpenRGBColor(clr.R, clr.G, clr.B);
+                    clr = ColorHelper.ChangeHue(clr, (360.0 / 2.0) / data.Leds.Length);
                 }
                 client.UpdateLeds(i, list);
             }

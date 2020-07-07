@@ -106,14 +106,12 @@ namespace OpenRGB.NET.Test
         {
             for (int i = 0; i < nbDryRun; i++)
             {
-                using (OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: DryRun", autoconnect: true))
+                using OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: DryRun", autoconnect: true);
+                int nbController = client.GetControllerCount();
+                for (int j = 0; i < nbController; i++)
                 {
-                    int nbController = client.GetControllerCount();
-                    for (int j = 0; i < nbController; i++)
-                    {
-                        OpenRGBDevice controller = client.GetControllerData(i);
-                        Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
-                    }
+                    OpenRGBDevice controller = client.GetControllerData(j);
+                    Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
                 }
             }
         }

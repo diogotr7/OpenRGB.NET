@@ -7,8 +7,6 @@ namespace OpenRGB.NET
     {
         public string Name;
         public OpenRGBZoneType Type;
-        public OpenRGBLed[] Leds;
-        public OpenRGBColor[] Colors;
         public uint LedCount;
         public uint LedsMin;
         public uint LedsMax;

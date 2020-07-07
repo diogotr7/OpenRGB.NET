@@ -142,13 +142,45 @@ namespace OpenRGB.NET
             bytes[1] = 0;
             bytes[2] = 0;
             bytes[3] = 0;
-            BitConverter.GetBytes((ushort)ledCount)
-                .CopyTo(bytes, 4);
+            BitConverter.GetBytes((ushort)ledCount).CopyTo(bytes, 4);
 
             for (int i = 0; i < ledCount; i++)
                 colors[i].Encode().CopyTo(bytes, GetIndex(i));
 
             SendMessage(OpenRGBCommand.UpdateLeds, bytes, (uint)deviceId);
+        }
+
+        public void UpdateZone(int deviceId, int zoneId, OpenRGBColor[] colors)
+        {
+            if (colors is null)
+                throw new ArgumentNullException(nameof(colors));
+
+            if (deviceId < 0)
+                throw new ArgumentException(nameof(deviceId));
+
+            if (zoneId < 0)
+                throw new ArgumentException(nameof(zoneId));
+
+            //4 bytes of nothing
+            //4 bytes for zone index (uint)
+            //2 bytes for how many colors (ushort)
+            //4 bytes per color
+            int GetIndex(int a) => 4 + 4 + 2 + (4 * a);
+
+            var ledCount = colors.Length;
+            var bytes = new byte[GetIndex(ledCount)];
+
+            bytes[0] = 0;
+            bytes[1] = 0;
+            bytes[2] = 0;
+            bytes[3] = 0;
+            BitConverter.GetBytes((uint)zoneId).CopyTo(bytes, 4);
+            BitConverter.GetBytes((ushort)ledCount).CopyTo(bytes, 8);
+
+            for (int i = 0; i < ledCount; i++)
+                colors[i].Encode().CopyTo(bytes, GetIndex(i));
+
+            SendMessage(OpenRGBCommand.UpdateZoneLeds, bytes, (uint)deviceId);
         }
         #endregion
 

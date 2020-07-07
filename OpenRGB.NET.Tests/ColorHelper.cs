@@ -65,5 +65,19 @@ namespace OpenRGB.NET.Test
 
             return FromHsv(hue, saturation, value);
         }
+
+        public static OpenRGBColor[] GetRainbow(OpenRGBColor start, int amount)
+        {
+            var array = new OpenRGBColor[amount];
+            var hueIncrement = 360.0 / amount;
+            for (int i = 0; i < amount; i++)
+            {
+                array[i] = new OpenRGBColor(start);
+                start = start.ChangeHue(hueIncrement);
+            }
+            return array;
+        }
+
+        public static OpenRGBColor[] GetRainbow(OpenRGBColor start, uint amount) => GetRainbow(start, (int)amount);
     }
 }

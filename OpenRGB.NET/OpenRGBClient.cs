@@ -15,7 +15,7 @@ namespace OpenRGB.NET
         private bool disposed;
 
         #region Basic init methods
-        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET")
+        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = false)
         {
             _ip = ip;
             _port = port;
@@ -151,7 +151,7 @@ namespace OpenRGB.NET
                 if (disposing)
                 {
                     // Managed object only
-                    _socket.Dispose();
+                    Disconnect();
                     disposed = true;
                 }
                 

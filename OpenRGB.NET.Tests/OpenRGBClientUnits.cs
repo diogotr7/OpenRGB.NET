@@ -1,8 +1,8 @@
 using System;
-using Xunit;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Diagnostics;
+using System.Linq;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace OpenRGB.NET.Test

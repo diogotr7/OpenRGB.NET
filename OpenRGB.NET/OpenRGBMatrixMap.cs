@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace OpenRGB.NET
+﻿namespace OpenRGB.NET
 {
     public class OpenRGBMatrixMap
     {
@@ -8,13 +6,13 @@ namespace OpenRGB.NET
         public uint Width;
         public uint[,] Matrix;
 
-        public static OpenRGBMatrixMap Decode(byte[] buffer, ref int offset)
+        internal static OpenRGBMatrixMap Decode(byte[] buffer, ref int offset)
         {
             var matx = new OpenRGBMatrixMap();
 
-            matx.Height = BufferReader.GetUInt32(buffer, ref offset);
+            matx.Height = buffer.GetUInt32(ref offset);
 
-            matx.Width = BufferReader.GetUInt32(buffer, ref offset);
+            matx.Width = buffer.GetUInt32(ref offset);
 
             matx.Matrix = new uint[matx.Height, matx.Width];
 
@@ -22,7 +20,7 @@ namespace OpenRGB.NET
             {
                 for (int j = 0; j < matx.Width; j++)
                 {
-                    matx.Matrix[i, j] = BufferReader.GetUInt32(buffer, ref offset);
+                    matx.Matrix[i, j] = buffer.GetUInt32(ref offset);
                 }
             }
 

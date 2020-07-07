@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OpenRGB.NET.Enums
+﻿namespace OpenRGB.NET.Enums
 {
     public enum OpenRGBZoneType
     {

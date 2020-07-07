@@ -1,7 +1,5 @@
 ﻿using OpenRGB.NET.Enums;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OpenRGB.NET
 {
@@ -19,7 +17,7 @@ namespace OpenRGB.NET
         public OpenRGBColorMode ColorMode;
         public OpenRGBColor[] Colors;
 
-        public static OpenRGBMode[] Decode(byte[] buffer, ref int offset, uint numModes)
+        internal static OpenRGBMode[] Decode(byte[] buffer, ref int offset, uint numModes)
         {
             var modes = new List<OpenRGBMode>((int)numModes);
 
@@ -27,27 +25,27 @@ namespace OpenRGB.NET
             {
                 var newMode = new OpenRGBMode();
 
-                newMode.Name = BufferReader.GetString(buffer, ref offset);
+                newMode.Name = buffer.GetString(ref offset);
 
-                newMode.Value = BufferReader.GetInt32(buffer, ref offset);
+                newMode.Value = buffer.GetInt32(ref offset);
 
-                newMode.Flags = (OpenRGBModeFlags)BufferReader.GetUInt32(buffer, ref offset);
+                newMode.Flags = (OpenRGBModeFlags)buffer.GetUInt32(ref offset);
 
-                var speedMin = BufferReader.GetUInt32(buffer, ref offset);
+                var speedMin = buffer.GetUInt32(ref offset);
 
-                var speedMax = BufferReader.GetUInt32(buffer, ref offset);
+                var speedMax = buffer.GetUInt32(ref offset);
 
-                var colorMin = BufferReader.GetUInt32(buffer, ref offset);
+                var colorMin = buffer.GetUInt32(ref offset);
 
-                var colorMax = BufferReader.GetUInt32(buffer, ref offset);
+                var colorMax = buffer.GetUInt32(ref offset);
 
-                var speed = BufferReader.GetUInt32(buffer, ref offset);
+                var speed = buffer.GetUInt32(ref offset);
 
-                var direction = BufferReader.GetUInt32(buffer, ref offset);
+                var direction = buffer.GetUInt32(ref offset);
 
-                newMode.ColorMode = (OpenRGBColorMode)BufferReader.GetUInt32(buffer, ref offset);
+                newMode.ColorMode = (OpenRGBColorMode)buffer.GetUInt32(ref offset);
 
-                ushort colorCount = BufferReader.GetUInt16(buffer, ref offset);
+                ushort colorCount = buffer.GetUInt16(ref offset);
                 newMode.Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
 
                 if (newMode.Flags.HasFlag(OpenRGBModeFlags.HasSpeed))

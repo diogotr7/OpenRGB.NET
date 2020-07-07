@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace OpenRGB.NET
 {
@@ -17,7 +15,7 @@ namespace OpenRGB.NET
             Blue = blue;
         }
 
-        public static OpenRGBColor[] Decode(byte[] buffer, ref int offset, ushort colorCount)
+        internal static OpenRGBColor[] Decode(byte[] buffer, ref int offset, ushort colorCount)
         {
             var colors = new List<OpenRGBColor>(colorCount);
 
@@ -35,7 +33,7 @@ namespace OpenRGB.NET
             return colors.ToArray();
         }
 
-        public byte[] Encode()
+        internal byte[] Encode()
         {
             return new byte[]
             {

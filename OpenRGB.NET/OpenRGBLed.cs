@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-
 namespace OpenRGB.NET
 {
     public class OpenRGBLed
@@ -10,7 +5,7 @@ namespace OpenRGB.NET
         public string Name;
         public uint Value;
 
-        public static OpenRGBLed[] Decode(byte[] buffer, ref int offset, ushort ledCount)
+        internal static OpenRGBLed[] Decode(byte[] buffer, ref int offset, ushort ledCount)
         {
             var leds = new OpenRGBLed[ledCount];
 
@@ -18,17 +13,14 @@ namespace OpenRGB.NET
             {
                 leds[led] = new OpenRGBLed
                 {
-                    Name = BufferReader.GetString(buffer, ref offset),
-                    Value = BufferReader.GetUInt32(buffer, ref offset)
+                    Name = buffer.GetString(ref offset),
+                    Value = buffer.GetUInt32(ref offset)
                 };
             }
 
             return leds;
         }
 
-        public override string ToString()
-        {
-            return $"Name: {Name}, Value: {Value}";
-        }
+        public override string ToString() => $"Name: {Name}, Value: {Value}";
     }
 }

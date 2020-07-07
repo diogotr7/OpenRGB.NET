@@ -1,6 +1,4 @@
 ﻿using OpenRGB.NET.Enums;
-using System;
-using System.Text;
 
 namespace OpenRGB.NET
 {
@@ -18,37 +16,39 @@ namespace OpenRGB.NET
         public OpenRGBLed[] Leds;
         public OpenRGBColor[] Colors;
 
-        public static OpenRGBDevice Decode(byte[] buffer)
+        internal static OpenRGBDevice Decode(byte[] buffer)
         {
-            var a = new OpenRGBDevice();
+            var dev = new OpenRGBDevice();
             int offset = sizeof(uint);
 
-            a.Type = (OpenRGBDeviceType)BufferReader.GetInt32(buffer, ref offset);
+            dev.Type = (OpenRGBDeviceType)buffer.GetInt32(ref offset);
 
-            a.Name = BufferReader.GetString(buffer, ref offset);
+            dev.Name = buffer.GetString(ref offset);
 
-            a.Description = BufferReader.GetString(buffer, ref offset);
+            dev.Description = buffer.GetString(ref offset);
 
-            a.Version = BufferReader.GetString(buffer, ref offset);
+            dev.Version = buffer.GetString(ref offset);
 
-            a.Serial = BufferReader.GetString(buffer, ref offset);
+            dev.Serial = buffer.GetString(ref offset);
 
-            a.Location = BufferReader.GetString(buffer, ref offset);
+            dev.Location = buffer.GetString(ref offset);
 
-            var modeCount = BufferReader.GetUInt16(buffer, ref offset);
-            a.ActiveMode = BufferReader.GetInt32(buffer, ref offset);
-            a.Modes = OpenRGBMode.Decode(buffer, ref offset, modeCount);
+            var modeCount = buffer.GetUInt16(ref offset);
+            dev.ActiveMode = buffer.GetInt32(ref offset);
+            dev.Modes = OpenRGBMode.Decode(buffer, ref offset, modeCount);
 
-            var zoneCount = BufferReader.GetUInt16(buffer, ref offset);
-            a.Zones = OpenRGBZone.Decode(buffer, ref offset, zoneCount);
+            var zoneCount = buffer.GetUInt16(ref offset);
+            dev.Zones = OpenRGBZone.Decode(buffer, ref offset, zoneCount);
 
-            var ledCount = BufferReader.GetUInt16(buffer, ref offset);
-            a.Leds = OpenRGBLed.Decode(buffer, ref offset, ledCount);
+            var ledCount = buffer.GetUInt16(ref offset);
+            dev.Leds = OpenRGBLed.Decode(buffer, ref offset, ledCount);
 
-            var colorCount = BufferReader.GetUInt16(buffer, ref offset);
-            a.Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
+            var colorCount = buffer.GetUInt16(ref offset);
+            dev.Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
 
-            return a;
+            return dev;
         }
+
+        public override string ToString() => $"{Type}: {Name}";
     }
 }

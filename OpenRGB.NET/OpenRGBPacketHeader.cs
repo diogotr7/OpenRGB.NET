@@ -12,7 +12,7 @@ namespace OpenRGB.NET
         public uint Command;
         public uint DataLength;
 
-        public OpenRGBPacketHeader(uint deviceId, uint command, uint length)
+        internal OpenRGBPacketHeader(uint deviceId, uint command, uint length)
         {
             DeviceId = deviceId;
             Command = command;

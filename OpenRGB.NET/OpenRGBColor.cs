@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBColor
+    public class OpenRGBColor : IEquatable<OpenRGBColor>
     {
         public byte Red;
         public byte Green;
@@ -13,6 +14,16 @@ namespace OpenRGB.NET
             Red = red;
             Green = green;
             Blue = blue;
+        }
+
+        public OpenRGBColor(OpenRGBColor other)
+        {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+
+            Red = other.Red;
+            Green = other.Green;
+            Blue = other.Blue;
         }
 
         internal static OpenRGBColor[] Decode(byte[] buffer, ref int offset, ushort colorCount)
@@ -48,5 +59,10 @@ namespace OpenRGB.NET
         {
             return $"R:{Red}, G:{Green}, B:{Blue} ";
         }
+
+        public bool Equals(OpenRGBColor other) =>
+            this.Red == other.Red &&
+            this.Green == other.Green &&
+            this.Blue == other.Blue;
     }
 }

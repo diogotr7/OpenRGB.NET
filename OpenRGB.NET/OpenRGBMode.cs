@@ -5,17 +5,17 @@ namespace OpenRGB.NET
 {
     public class OpenRGBMode
     {
-        public string Name;
-        public int Value;
-        public OpenRGBModeFlags Flags;
-        public uint SpeedMin;
-        public uint SpeedMax;
-        public uint ColorMin;
-        public uint ColorMax;
-        public uint Speed;
-        public OpenRGBModeDirection Direction;
-        public OpenRGBColorMode ColorMode;
-        public OpenRGBColor[] Colors;
+        public string Name { get; private set; }
+        public int Value { get; private set; }
+        public OpenRGBModeFlags Flags { get; private set; }
+        public uint SpeedMin { get; private set; }
+        public uint SpeedMax { get; private set; }
+        public uint ColorMin { get; private set; }
+        public uint ColorMax { get; private set; }
+        public uint Speed { get; private set; }
+        public OpenRGBModeDirection Direction { get; private set; }
+        public OpenRGBColorMode ColorMode { get; private set; }
+        public OpenRGBColor[] Colors { get; private set; }
 
         internal static OpenRGBMode[] Decode(byte[] buffer, ref int offset, uint numModes)
         {

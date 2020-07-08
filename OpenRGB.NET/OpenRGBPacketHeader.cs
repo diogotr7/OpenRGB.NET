@@ -8,9 +8,9 @@ namespace OpenRGB.NET
     {
         public const int Size = 16;
 
-        public uint DeviceId;
-        public uint Command;
-        public uint DataLength;
+        public uint DeviceId { get; }
+        public uint Command { get; }
+        public uint DataLength { get; }
 
         internal OpenRGBPacketHeader(uint deviceId, uint command, uint length)
         {

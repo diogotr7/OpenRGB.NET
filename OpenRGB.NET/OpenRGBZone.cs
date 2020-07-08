@@ -5,12 +5,12 @@ namespace OpenRGB.NET
 {
     public class OpenRGBZone
     {
-        public string Name;
-        public OpenRGBZoneType Type;
-        public uint LedCount;
-        public uint LedsMin;
-        public uint LedsMax;
-        public OpenRGBMatrixMap MatrixMap;
+        public string Name { get; private set; }
+        public OpenRGBZoneType Type { get; private set; }
+        public uint LedCount { get; private set; }
+        public uint LedsMin { get; private set; }
+        public uint LedsMax { get; private set; }
+        public OpenRGBMatrixMap MatrixMap { get; private set; }
 
         internal static OpenRGBZone[] Decode(byte[] buffer, ref int offset, ushort zoneCount)
         {

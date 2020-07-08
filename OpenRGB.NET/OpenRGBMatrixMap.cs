@@ -2,9 +2,9 @@
 {
     public class OpenRGBMatrixMap
     {
-        public uint Height;
-        public uint Width;
-        public uint[,] Matrix;
+        public uint Height { get; private set; }
+        public uint Width { get; private set; }
+        public uint[,] Matrix { get; private set; }
 
         internal static OpenRGBMatrixMap Decode(byte[] buffer, ref int offset)
         {

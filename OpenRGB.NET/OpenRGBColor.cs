@@ -5,9 +5,9 @@ namespace OpenRGB.NET
 {
     public class OpenRGBColor : IEquatable<OpenRGBColor>
     {
-        public byte Red;
-        public byte Green;
-        public byte Blue;
+        public byte Red { get; set; }
+        public byte Green { get; set; }
+        public byte Blue { get; set; }
 
         public OpenRGBColor(byte red = 0, byte green = 0, byte blue = 0)
         {

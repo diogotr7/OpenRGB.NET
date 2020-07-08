@@ -4,17 +4,17 @@ namespace OpenRGB.NET
 {
     public class OpenRGBDevice
     {
-        public OpenRGBDeviceType Type;
-        public string Name;
-        public string Description;
-        public string Version;
-        public string Serial;
-        public string Location;
-        public int ActiveMode;
-        public OpenRGBMode[] Modes;
-        public OpenRGBZone[] Zones;
-        public OpenRGBLed[] Leds;
-        public OpenRGBColor[] Colors;
+        public OpenRGBDeviceType Type{ get; private set; }
+        public string Name{ get; private set; }
+        public string Description{ get; private set; }
+        public string Version{ get; private set; }
+        public string Serial{ get; private set; }
+        public string Location{ get; private set; }
+        public int ActiveMode{ get; private set; }
+        public OpenRGBMode[] Modes{ get; private set; }
+        public OpenRGBZone[] Zones{ get; private set; }
+        public OpenRGBLed[] Leds{ get; private set; }
+        public OpenRGBColor[] Colors{ get; private set; }
 
         internal static OpenRGBDevice Decode(byte[] buffer)
         {

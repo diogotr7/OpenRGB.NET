@@ -2,8 +2,8 @@ namespace OpenRGB.NET
 {
     public class OpenRGBLed
     {
-        public string Name;
-        public uint Value;
+        public string Name { get; private set; }
+        public uint Value { get; private set; }
 
         internal static OpenRGBLed[] Decode(byte[] buffer, ref int offset, ushort ledCount)
         {

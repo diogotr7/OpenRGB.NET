@@ -132,7 +132,7 @@ namespace OpenRGB.NET.Test
                             break;
                         case Enums.OpenRGBZoneType.Matrix:
                             var rainbow = ColorHelper.GetRainbow(new OpenRGBColor(0, 255, 0), zone.MatrixMap.Width);
-                            var matrix = new OpenRGBColor[zone.LedCount];
+                            var matrix = Enumerable.Range(0, (int)zone.LedCount).Select(_ => new OpenRGBColor()).ToArray();
                             for (int k = 0; k < zone.MatrixMap.Width; k++)
                             {
                                 for (int l = 0; l < zone.MatrixMap.Height; l++)

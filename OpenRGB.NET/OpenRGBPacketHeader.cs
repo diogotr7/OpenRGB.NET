@@ -21,22 +21,22 @@ namespace OpenRGB.NET
 
         internal byte[] Encode()
         {
-            var ret = new List<byte>(Size);
+            var arr = new byte[Size];
 
-            ret.AddRange(Encoding.ASCII.GetBytes("ORGB"));
-            ret.AddRange(BitConverter.GetBytes(DeviceId));
-            ret.AddRange(BitConverter.GetBytes(Command));
-            ret.AddRange(BitConverter.GetBytes(DataLength));
+            Encoding.ASCII.GetBytes("ORGB").CopyTo(arr, 0);
+            BitConverter.GetBytes(DeviceId).CopyTo(arr, 4);
+            BitConverter.GetBytes(Command).CopyTo(arr, 8);
+            BitConverter.GetBytes(DataLength).CopyTo(arr, 12);
 
-            return ret.ToArray();
+            return arr;
         }
 
         internal static OpenRGBPacketHeader Decode(byte[] buffer)
         {
             if (buffer.Length != Size)
-                throw new Exception();
+                throw new ArgumentException($"{nameof(buffer)} has length {buffer.Length}, should be {Size}");
             if (Encoding.ASCII.GetString(buffer, 0, 4) != "ORGB")
-                throw new Exception();
+                throw new ArgumentException("Magic bytes \"ORGB\" were not found");
 
             return new OpenRGBPacketHeader(
                 BitConverter.ToUInt32(buffer, 4),

@@ -9,9 +9,9 @@ namespace OpenRGB.NET
         {
             var leds = new OpenRGBLed[ledCount];
 
-            for (int led = 0; led < ledCount; led++)
+            for (int i = 0; i < ledCount; i++)
             {
-                leds[led] = new OpenRGBLed
+                leds[i] = new OpenRGBLed
                 {
                     Name = buffer.GetString(ref offset),
                     Value = buffer.GetUInt32(ref offset)

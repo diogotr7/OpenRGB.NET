@@ -10,11 +10,13 @@ namespace OpenRGB.NET
         public string Version { get; private set; }
         public string Serial { get; private set; }
         public string Location { get; private set; }
-        public int ActiveMode { get; private set; }
+        public int ActiveModeIndex { get; private set; }
         public OpenRGBMode[] Modes { get; private set; }
         public OpenRGBZone[] Zones { get; private set; }
         public OpenRGBLed[] Leds { get; private set; }
         public OpenRGBColor[] Colors { get; private set; }
+
+        public OpenRGBMode ActiveMode => Modes[ActiveModeIndex];
 
         internal static OpenRGBDevice Decode(byte[] buffer)
         {
@@ -34,7 +36,7 @@ namespace OpenRGB.NET
             dev.Location = buffer.GetString(ref offset);
 
             var modeCount = buffer.GetUInt16(ref offset);
-            dev.ActiveMode = buffer.GetInt32(ref offset);
+            dev.ActiveModeIndex = buffer.GetInt32(ref offset);
             dev.Modes = OpenRGBMode.Decode(buffer, ref offset, modeCount);
 
             var zoneCount = buffer.GetUInt16(ref offset);

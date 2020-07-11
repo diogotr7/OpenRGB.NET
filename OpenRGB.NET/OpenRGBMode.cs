@@ -17,19 +17,21 @@ namespace OpenRGB.NET
         public OpenRGBColorMode ColorMode { get; private set; }
         public OpenRGBColor[] Colors { get; private set; }
 
+        public bool HasFlag(OpenRGBModeFlags flag) => (Flags & flag) != 0;
+
         internal static OpenRGBMode[] Decode(byte[] buffer, ref int offset, uint numModes)
         {
-            var modes = new List<OpenRGBMode>((int)numModes);
+            var modes = new OpenRGBMode[numModes];
 
-            for (int mode = 0; mode < numModes; mode++)
+            for (int i = 0; i < numModes; i++)
             {
-                var newMode = new OpenRGBMode();
+                modes[i] = new OpenRGBMode();
 
-                newMode.Name = buffer.GetString(ref offset);
+                modes[i].Name = buffer.GetString(ref offset);
 
-                newMode.Value = buffer.GetInt32(ref offset);
+                modes[i].Value = buffer.GetInt32(ref offset);
 
-                newMode.Flags = (OpenRGBModeFlags)buffer.GetUInt32(ref offset);
+                modes[i].Flags = (OpenRGBModeFlags)buffer.GetUInt32(ref offset);
 
                 var speedMin = buffer.GetUInt32(ref offset);
 
@@ -43,39 +45,37 @@ namespace OpenRGB.NET
 
                 var direction = buffer.GetUInt32(ref offset);
 
-                newMode.ColorMode = (OpenRGBColorMode)buffer.GetUInt32(ref offset);
+                modes[i].ColorMode = (OpenRGBColorMode)buffer.GetUInt32(ref offset);
 
                 ushort colorCount = buffer.GetUInt16(ref offset);
-                newMode.Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
+                modes[i].Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
 
-                if (newMode.Flags.HasFlag(OpenRGBModeFlags.HasSpeed))
+                if (modes[i].HasFlag(OpenRGBModeFlags.HasSpeed))
                 {
-                    newMode.Speed = speed;
-                    newMode.SpeedMin = speedMin;
-                    newMode.SpeedMax = speedMax;
+                    modes[i].Speed = speed;
+                    modes[i].SpeedMin = speedMin;
+                    modes[i].SpeedMax = speedMax;
                 }
 
-                if (newMode.Flags.HasFlag(OpenRGBModeFlags.HasModeSpecificColor))
+                if (modes[i].HasFlag(OpenRGBModeFlags.HasModeSpecificColor))
                 {
-                    newMode.ColorMin = colorMin;
-                    newMode.ColorMax = colorMax;
+                    modes[i].ColorMin = colorMin;
+                    modes[i].ColorMax = colorMax;
                 }
 
-                if (newMode.Flags.HasFlag(OpenRGBModeFlags.HasDirectionHV) ||
-                    newMode.Flags.HasFlag(OpenRGBModeFlags.HasDirectionLR) ||
-                    newMode.Flags.HasFlag(OpenRGBModeFlags.HasDirectionUD))
+                if (modes[i].HasFlag(OpenRGBModeFlags.HasDirectionHV) ||
+                    modes[i].HasFlag(OpenRGBModeFlags.HasDirectionLR) ||
+                    modes[i].HasFlag(OpenRGBModeFlags.HasDirectionUD))
                 {
-                    newMode.Direction = (OpenRGBModeDirection)direction;
+                    modes[i].Direction = (OpenRGBModeDirection)direction;
                 }
                 else
                 {
-                    newMode.Direction = OpenRGBModeDirection.None;
+                    modes[i].Direction = OpenRGBModeDirection.None;
                 }
-
-                modes.Add(newMode);
             }
 
-            return modes.ToArray();
+            return modes;
         }
     }
 }

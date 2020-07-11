@@ -14,33 +14,31 @@ namespace OpenRGB.NET
 
         internal static OpenRGBZone[] Decode(byte[] buffer, ref int offset, ushort zoneCount)
         {
-            var zones = new List<OpenRGBZone>((int)zoneCount);
+            var zones = new OpenRGBZone[zoneCount];
 
-            for (int zone = 0; zone < zoneCount; zone++)
+            for (int i = 0; i < zoneCount; i++)
             {
-                var newZone = new OpenRGBZone();
+                zones[i] = new OpenRGBZone();
 
-                newZone.Name = buffer.GetString(ref offset);
+                zones[i].Name = buffer.GetString(ref offset);
 
-                newZone.Type = (OpenRGBZoneType)buffer.GetUInt32(ref offset);
+                zones[i].Type = (OpenRGBZoneType)buffer.GetUInt32(ref offset);
 
-                newZone.LedsMin = buffer.GetUInt32(ref offset);
+                zones[i].LedsMin = buffer.GetUInt32(ref offset);
 
-                newZone.LedsMax = buffer.GetUInt32(ref offset);
+                zones[i].LedsMax = buffer.GetUInt32(ref offset);
 
-                newZone.LedCount = buffer.GetUInt32(ref offset);
+                zones[i].LedCount = buffer.GetUInt32(ref offset);
 
                 var zoneMatrixLength = buffer.GetUInt16(ref offset);
 
                 if (zoneMatrixLength > 0)
-                    newZone.MatrixMap = OpenRGBMatrixMap.Decode(buffer, ref offset);
+                    zones[i].MatrixMap = OpenRGBMatrixMap.Decode(buffer, ref offset);
                 else
-                    newZone.MatrixMap = null;
-
-                zones.Add(newZone);
+                    zones[i].MatrixMap = null;
             }
 
-            return zones.ToArray();
+            return zones;
         }
     }
 }

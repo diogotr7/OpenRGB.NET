@@ -56,7 +56,6 @@ namespace OpenRGB.NET.Test
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
         }
 
-
         [Fact]
         public void DisposePatternListController()
         {
@@ -87,9 +86,9 @@ namespace OpenRGB.NET.Test
             {
                 var device = devices[i];
 
-                var originalColors = ColorHelper.GetRainbow(new OpenRGBColor(255, 0, 0), device.Leds.Length);
+                var originalColors = OpenRGBColor.GetRainbow(device.Leds.Length);
 
-                client.UpdateLeds(i, originalColors);
+                client.UpdateLeds(i, originalColors.ToArray());
                 var updatedColors = client.GetControllerData(i).Colors;
 
                 Assert.True(updatedColors.SequenceEqual(originalColors));
@@ -124,14 +123,14 @@ namespace OpenRGB.NET.Test
                     switch (zone.Type)
                     {
                         case Enums.OpenRGBZoneType.Linear:
-                            var colors = ColorHelper.GetRainbow(new OpenRGBColor(255, 0, 0), zone.LedCount);
-                            client.UpdateZone(i, j, colors);
+                            var colors = OpenRGBColor.GetRainbow(zone.LedCount);
+                            client.UpdateZone(i, j, colors.ToArray());
                             break;
                         case Enums.OpenRGBZoneType.Single:
                             client.UpdateZone(i, j, new[] { new OpenRGBColor(255, 0, 0) });
                             break;
                         case Enums.OpenRGBZoneType.Matrix:
-                            var rainbow = ColorHelper.GetRainbow(new OpenRGBColor(0, 255, 0), zone.MatrixMap.Width);
+                            var rainbow = OpenRGBColor.GetRainbow(zone.MatrixMap.Width).ToArray();
                             var matrix = Enumerable.Range(0, (int)zone.LedCount).Select(_ => new OpenRGBColor()).ToArray();
                             for (int k = 0; k < zone.MatrixMap.Width; k++)
                             {

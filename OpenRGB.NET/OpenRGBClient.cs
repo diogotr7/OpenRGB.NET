@@ -119,6 +119,17 @@ namespace OpenRGB.NET
             SendMessage(OpenRGBCommand.RequestControllerData, null, (uint)id);
             return OpenRGBDevice.Decode(ReadMessage());
         }
+
+        public OpenRGBDevice[] GetAllControllerData()
+        {
+            var count = GetControllerCount();
+
+            var array = new OpenRGBDevice[count];
+            for (int i = 0; i < count; i++)
+                array[i] = GetControllerData(i);
+
+            return array;
+        }
         #endregion
 
         #region Update Methods

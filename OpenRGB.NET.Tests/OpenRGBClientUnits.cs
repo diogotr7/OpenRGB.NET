@@ -138,7 +138,7 @@ namespace OpenRGB.NET.Test
                                     var index = zone.MatrixMap.Matrix[l, k];
                                     if (index != uint.MaxValue)
                                     {
-                                        matrix[index] = new OpenRGBColor(rainbow[k]);
+                                        matrix[index] = rainbow[k].Clone();
                                     }
                                 }
                             }

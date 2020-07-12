@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace OpenRGB.NET
 {
@@ -17,23 +18,13 @@ namespace OpenRGB.NET
             B = blue;
         }
 
-        public OpenRGBColor(OpenRGBColor other)
-        {
-            if (other is null)
-                throw new ArgumentNullException(nameof(other));
-
-            R = other.R;
-            G = other.G;
-            B = other.B;
-        }
-
-        public static OpenRGBColor FromRgb(byte red, byte green, byte blue)
-        {
-            return new OpenRGBColor { R = red, G = green, B = blue };
-        }
-
         public static OpenRGBColor FromHsv(double hue, double saturation, double value)
         {
+            if (saturation < 0 || saturation > 1)
+                throw new ArgumentOutOfRangeException(nameof(saturation));
+            if (value < 0 || value > 1)
+                throw new ArgumentOutOfRangeException(nameof(value));
+
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
             double f = (hue / 60) - Math.Floor(hue / 60);
 
@@ -46,17 +37,17 @@ namespace OpenRGB.NET
             switch (hi)
             {
                 case 0:
-                    return FromRgb(v, t, p);
+                    return new OpenRGBColor(v, t, p);
                 case 1:
-                    return FromRgb(q, v, p);
+                    return new OpenRGBColor(q, v, p);
                 case 2:
-                    return FromRgb(p, v, t);
+                    return new OpenRGBColor(p, v, t);
                 case 3:
-                    return FromRgb(p, q, v);
+                    return new OpenRGBColor(p, q, v);
                 case 4:
-                    return FromRgb(t, p, v);
+                    return new OpenRGBColor(t, p, v);
                 default:
-                    return FromRgb(v, p, q);
+                    return new OpenRGBColor(v, p, q);
             }
         }
 
@@ -113,29 +104,10 @@ namespace OpenRGB.NET
             };
         }
 
-        public OpenRGBColor GetHueShiftedColor(double offset)
-        {
-            if (offset == 0)
-                return this;
+        public static IEnumerable<OpenRGBColor> GetRainbow(int amount, double offset = 0) => Enumerable.Range(0, amount)
+            .Select(i => FromHsv(offset + (360.0d / amount * i), 1, 1));
 
-            var (h, s, v) = ToHsv();
-
-            h += offset;
-
-            while (h > 360) h -= 360;
-            while (h < 0) h += 360;
-
-            return FromHsv(h, s, v);
-        }
-
-        public static IEnumerable<OpenRGBColor> GetRainbow(OpenRGBColor start, int amount) => Enumerable.Range(0, amount)
-            .Select(i => new OpenRGBColor(start.GetHueShiftedColor(360.0d / amount * i)));
-
-        public static IEnumerable<OpenRGBColor> GetRainbow(OpenRGBColor start, uint amount) => GetRainbow(start, (int)amount);
-
-        public static IEnumerable<OpenRGBColor> GetRainbow(int amount) => GetRainbow(new OpenRGBColor(255, 0, 0), amount);
-
-        public static IEnumerable<OpenRGBColor> GetRainbow(uint amount) => GetRainbow(new OpenRGBColor(255, 0, 0), (int)amount);
+        public static IEnumerable<OpenRGBColor> GetRainbow(uint amount, double offset = 0) => GetRainbow((int)amount, offset);
 
         public override string ToString()
         {
@@ -146,5 +118,7 @@ namespace OpenRGB.NET
             this.R == other.R &&
             this.G == other.G &&
             this.B == other.B;
+
+        public OpenRGBColor Clone() => new OpenRGBColor(R, G, B);
     }
 }

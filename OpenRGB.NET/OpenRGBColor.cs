@@ -104,10 +104,10 @@ namespace OpenRGB.NET
             };
         }
 
-        public static IEnumerable<OpenRGBColor> GetRainbow(int amount, double offset = 0) => Enumerable.Range(0, amount)
-            .Select(i => FromHsv(offset + (360.0d / amount * i), 1, 1));
+        public static IEnumerable<OpenRGBColor> GetRainbow(int amount, double offset = 0, double range = 360.0d) => Enumerable.Range(0, amount)
+            .Select(i => FromHsv(offset + (range / amount * i), 1, 1));
 
-        public static IEnumerable<OpenRGBColor> GetRainbow(uint amount, double offset = 0) => GetRainbow((int)amount, offset);
+        public static IEnumerable<OpenRGBColor> GetRainbow(uint amount, double offset = 0, double range = 360.0d) => GetRainbow((int)amount, offset, range);
 
         public override string ToString()
         {

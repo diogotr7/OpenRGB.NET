@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace OpenRGB.NET
 {
@@ -104,10 +103,18 @@ namespace OpenRGB.NET
             };
         }
 
-        public static IEnumerable<OpenRGBColor> GetRainbow(int amount, double offset = 0, double range = 360.0d) => Enumerable.Range(0, amount)
-            .Select(i => FromHsv(offset + (range / amount * i), 1, 1));
+        public static IEnumerable<OpenRGBColor> GetHueRainbow(int amount, double hueStart = 0, double huePercent = 1.0,
+                                                                double saturation = 1.0, double value = 1.0) =>
+            Enumerable.Range(0, amount)
+                      .Select(i => FromHsv(hueStart + (360.0d * huePercent / amount * i), saturation, value));
 
-        public static IEnumerable<OpenRGBColor> GetRainbow(uint amount, double offset = 0, double range = 360.0d) => GetRainbow((int)amount, offset, range);
+        public static IEnumerable<OpenRGBColor> GetSinRainbow(int amount, int floor = 127, int width = 128, double range = 1.0, double offset = Math.PI/2) =>
+            Enumerable.Range(0, amount)
+                      .Select(i => new OpenRGBColor(
+                            (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + 0)),
+                            (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + (2 * Math.PI / 3))),
+                            (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + (4 * Math.PI / 3)))
+                            ));
 
         public override string ToString()
         {

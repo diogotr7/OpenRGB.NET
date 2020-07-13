@@ -6,7 +6,7 @@ namespace OpenRGB.NET
     public class OpenRGBZone
     {
         public string Name { get; private set; }
-        public OpenRGBZoneType Type { get; private set; }
+        public ZoneType Type { get; private set; }
         public uint LedCount { get; private set; }
         public uint LedsMin { get; private set; }
         public uint LedsMax { get; private set; }
@@ -22,7 +22,7 @@ namespace OpenRGB.NET
 
                 zones[i].Name = buffer.GetString(ref offset);
 
-                zones[i].Type = (OpenRGBZoneType)buffer.GetUInt32(ref offset);
+                zones[i].Type = (ZoneType)buffer.GetUInt32(ref offset);
 
                 zones[i].LedsMin = buffer.GetUInt32(ref offset);
 

@@ -50,14 +50,14 @@ namespace OpenRGB.NET
 
             //null terminate before sending
             SendMessage(
-                OpenRGBCommand.SetClientName,
+                CommandId.SetClientName,
                 Encoding.ASCII.GetBytes(_name + '\0')
             );
         }
         #endregion
 
         #region Basic Comms methods
-        private void SendMessage(OpenRGBCommand command, IEnumerable<byte> buffer = null, uint deviceId = 0)
+        private void SendMessage(CommandId command, IEnumerable<byte> buffer = null, uint deviceId = 0)
         {
             //we can send the header right away. it contains the command we are sending
             //and the size of the packet that follows
@@ -107,7 +107,7 @@ namespace OpenRGB.NET
         #region Request Methods
         public int GetControllerCount()
         {
-            SendMessage(OpenRGBCommand.RequestControllerCount);
+            SendMessage(CommandId.RequestControllerCount);
             return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
@@ -116,7 +116,7 @@ namespace OpenRGB.NET
             if (id < 0)
                 throw new ArgumentException(nameof(id));
 
-            SendMessage(OpenRGBCommand.RequestControllerData, null, (uint)id);
+            SendMessage(CommandId.RequestControllerData, null, (uint)id);
             return OpenRGBDevice.Decode(ReadMessage());
         }
 
@@ -158,7 +158,7 @@ namespace OpenRGB.NET
             for (int i = 0; i < ledCount; i++)
                 colors[i].Encode().CopyTo(bytes, GetIndex(i));
 
-            SendMessage(OpenRGBCommand.UpdateLeds, bytes, (uint)deviceId);
+            SendMessage(CommandId.UpdateLeds, bytes, (uint)deviceId);
         }
 
         public void UpdateZone(int deviceId, int zoneId, OpenRGBColor[] colors)
@@ -191,7 +191,7 @@ namespace OpenRGB.NET
             for (int i = 0; i < ledCount; i++)
                 colors[i].Encode().CopyTo(bytes, GetIndex(i));
 
-            SendMessage(OpenRGBCommand.UpdateZoneLeds, bytes, (uint)deviceId);
+            SendMessage(CommandId.UpdateZoneLeds, bytes, (uint)deviceId);
         }
         #endregion
 

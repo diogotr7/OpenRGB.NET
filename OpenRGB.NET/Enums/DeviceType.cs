@@ -1,6 +1,6 @@
 ﻿namespace OpenRGB.NET.Enums
 {
-    public enum OpenRGBDeviceType
+    public enum DeviceType
     {
         Motherboard,
         Dram,

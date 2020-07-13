@@ -1,6 +1,6 @@
 ﻿namespace OpenRGB.NET.Enums
 {
-    public enum OpenRGBModeDirection
+    public enum Direction
     {
         None = -1,
         Left = 0,

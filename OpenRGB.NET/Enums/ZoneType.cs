@@ -1,6 +1,6 @@
 ﻿namespace OpenRGB.NET.Enums
 {
-    public enum OpenRGBZoneType
+    public enum ZoneType
     {
         Single,
         Linear,

@@ -1,6 +1,6 @@
 ﻿namespace OpenRGB.NET
 {
-    public enum OpenRGBCommand
+    public enum CommandId
     {
         RequestControllerCount = 0,
         RequestControllerData = 1,

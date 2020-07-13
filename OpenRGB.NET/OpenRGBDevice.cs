@@ -4,7 +4,7 @@ namespace OpenRGB.NET
 {
     public class OpenRGBDevice
     {
-        public OpenRGBDeviceType Type { get; private set; }
+        public DeviceType Type { get; private set; }
         public string Name { get; private set; }
         public string Description { get; private set; }
         public string Version { get; private set; }
@@ -23,7 +23,7 @@ namespace OpenRGB.NET
             var dev = new OpenRGBDevice();
             int offset = sizeof(uint);
 
-            dev.Type = (OpenRGBDeviceType)buffer.GetInt32(ref offset);
+            dev.Type = (DeviceType)buffer.GetInt32(ref offset);
 
             dev.Name = buffer.GetString(ref offset);
 

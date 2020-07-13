@@ -1,6 +1,6 @@
 ﻿namespace OpenRGB.NET.Enums
 {
-    public enum OpenRGBColorMode
+    public enum ColorMode
     {
         None,
         PerLed,

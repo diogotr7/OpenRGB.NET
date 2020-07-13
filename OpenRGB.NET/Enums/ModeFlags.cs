@@ -3,7 +3,7 @@
 namespace OpenRGB.NET.Enums
 {
     [Flags]
-    public enum OpenRGBModeFlags
+    public enum ModeFlags
     {
         HasSpeed = (1 << 0), /* Mode has speed parameter         */
         HasDirectionLR = (1 << 1), /* Mode has left/right parameter    */

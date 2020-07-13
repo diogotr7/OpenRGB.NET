@@ -121,14 +121,14 @@ namespace OpenRGB.NET.Test
                     var zone = device.Zones[j];
                     switch (zone.Type)
                     {
-                        case Enums.OpenRGBZoneType.Linear:
+                        case Enums.ZoneType.Linear:
                             var colors = OpenRGBColor.GetHueRainbow((int)zone.LedCount);
                             client.UpdateZone(i, j, colors.ToArray());
                             break;
-                        case Enums.OpenRGBZoneType.Single:
+                        case Enums.ZoneType.Single:
                             client.UpdateZone(i, j, new[] { new OpenRGBColor(255, 0, 0) });
                             break;
-                        case Enums.OpenRGBZoneType.Matrix:
+                        case Enums.ZoneType.Matrix:
                             var yeet = 2 * Math.PI / zone.MatrixMap.Width;
                             //var rainbow = OpenRGBColor.GetHueRainbow((int)zone.MatrixMap.Width).ToArray();
                             var rainbow = OpenRGBColor.GetSinRainbow((int)zone.MatrixMap.Width).ToArray();

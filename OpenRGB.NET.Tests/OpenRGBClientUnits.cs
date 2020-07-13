@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Xunit;
 using Xunit.Abstractions;
+using OpenRGB.NET.Models;
 
 namespace OpenRGB.NET.Test
 {

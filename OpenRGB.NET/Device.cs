@@ -3,7 +3,7 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBDevice
+    public class Device
     {
         public DeviceType Type { get; private set; }
         public string Name { get; private set; }
@@ -12,16 +12,16 @@ namespace OpenRGB.NET
         public string Serial { get; private set; }
         public string Location { get; private set; }
         public int ActiveModeIndex { get; private set; }
-        public OpenRGBMode[] Modes { get; private set; }
-        public OpenRGBZone[] Zones { get; private set; }
-        public OpenRGBLed[] Leds { get; private set; }
-        public OpenRGBColor[] Colors { get; private set; }
+        public Mode[] Modes { get; private set; }
+        public Zone[] Zones { get; private set; }
+        public Led[] Leds { get; private set; }
+        public Color[] Colors { get; private set; }
 
-        public OpenRGBMode ActiveMode => Modes[ActiveModeIndex];
+        public Mode ActiveMode => Modes[ActiveModeIndex];
 
-        internal static OpenRGBDevice Decode(byte[] buffer)
+        internal static Device Decode(byte[] buffer)
         {
-            var dev = new OpenRGBDevice();
+            var dev = new Device();
             int offset = sizeof(uint);
 
             dev.Type = (DeviceType)buffer.GetInt32(ref offset);
@@ -38,16 +38,16 @@ namespace OpenRGB.NET
 
             var modeCount = buffer.GetUInt16(ref offset);
             dev.ActiveModeIndex = buffer.GetInt32(ref offset);
-            dev.Modes = OpenRGBMode.Decode(buffer, ref offset, modeCount);
+            dev.Modes = Mode.Decode(buffer, ref offset, modeCount);
 
             var zoneCount = buffer.GetUInt16(ref offset);
-            dev.Zones = OpenRGBZone.Decode(buffer, ref offset, zoneCount);
+            dev.Zones = Zone.Decode(buffer, ref offset, zoneCount);
 
             var ledCount = buffer.GetUInt16(ref offset);
-            dev.Leds = OpenRGBLed.Decode(buffer, ref offset, ledCount);
+            dev.Leds = Led.Decode(buffer, ref offset, ledCount);
 
             var colorCount = buffer.GetUInt16(ref offset);
-            dev.Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
+            dev.Colors = Color.Decode(buffer, ref offset, colorCount);
 
             return dev;
         }

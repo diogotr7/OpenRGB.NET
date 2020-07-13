@@ -2,15 +2,15 @@
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBMatrixMap
+    public class MatrixMap
     {
         public uint Height { get; private set; }
         public uint Width { get; private set; }
         public uint[,] Matrix { get; private set; }
 
-        internal static OpenRGBMatrixMap Decode(byte[] buffer, ref int offset)
+        internal static MatrixMap Decode(byte[] buffer, ref int offset)
         {
-            var matx = new OpenRGBMatrixMap();
+            var matx = new MatrixMap();
 
             matx.Height = buffer.GetUInt32(ref offset);
 

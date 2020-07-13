@@ -63,10 +63,10 @@ namespace OpenRGB.NET
             //and the size of the packet that follows
             var packetSize = buffer?.Count() ?? 0;
             var result = _socket.Send(
-                new OpenRGBPacketHeader(deviceId, (uint)command, (uint)packetSize).Encode()
+                new PacketHeader(deviceId, (uint)command, (uint)packetSize).Encode()
             );
 
-            if (result != OpenRGBPacketHeader.Size)
+            if (result != PacketHeader.Size)
                 throw new Exception("Sent incorrect number of bytes when sending header in " + nameof(SendMessage));
 
             if (packetSize <= 0)
@@ -87,11 +87,11 @@ namespace OpenRGB.NET
         private byte[] ReadMessage()
         {
             //we need a byte buffer to store the header
-            var headerBuffer = new byte[OpenRGBPacketHeader.Size];
+            var headerBuffer = new byte[PacketHeader.Size];
             //then we read into that buffer
-            _socket.Receive(headerBuffer, OpenRGBPacketHeader.Size, SocketFlags.None);
+            _socket.Receive(headerBuffer, PacketHeader.Size, SocketFlags.None);
             //and decode it into a header to know how many bytes we will receive next
-            var header = OpenRGBPacketHeader.Decode(headerBuffer);
+            var header = PacketHeader.Decode(headerBuffer);
             if (header.DataLength <= 0)
                 throw new Exception("Length of header was zero");
 
@@ -111,20 +111,20 @@ namespace OpenRGB.NET
             return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
-        public OpenRGBDevice GetControllerData(int id)
+        public Device GetControllerData(int id)
         {
             if (id < 0)
                 throw new ArgumentException(nameof(id));
 
             SendMessage(CommandId.RequestControllerData, null, (uint)id);
-            return OpenRGBDevice.Decode(ReadMessage());
+            return Device.Decode(ReadMessage());
         }
 
-        public OpenRGBDevice[] GetAllControllerData()
+        public Device[] GetAllControllerData()
         {
             var count = GetControllerCount();
 
-            var array = new OpenRGBDevice[count];
+            var array = new Device[count];
             for (int i = 0; i < count; i++)
                 array[i] = GetControllerData(i);
 
@@ -133,7 +133,7 @@ namespace OpenRGB.NET
         #endregion
 
         #region Update Methods
-        public void UpdateLeds(int deviceId, OpenRGBColor[] colors)
+        public void UpdateLeds(int deviceId, Color[] colors)
         {
             if (colors is null)
                 throw new ArgumentNullException(nameof(colors));
@@ -161,7 +161,7 @@ namespace OpenRGB.NET
             SendMessage(CommandId.UpdateLeds, bytes, (uint)deviceId);
         }
 
-        public void UpdateZone(int deviceId, int zoneId, OpenRGBColor[] colors)
+        public void UpdateZone(int deviceId, int zoneId, Color[] colors)
         {
             if (colors is null)
                 throw new ArgumentNullException(nameof(colors));

@@ -46,7 +46,7 @@ namespace OpenRGB.NET.Test
             int nbController = client.GetControllerCount();
             for (int i = 0; i < nbController; i++)
             {
-                OpenRGBDevice controller = client.GetControllerData(i);
+                Device controller = client.GetControllerData(i);
                 Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
             }
 
@@ -63,7 +63,7 @@ namespace OpenRGB.NET.Test
             int nbController = client.GetControllerCount();
             for (int i = 0; i < nbController; i++)
             {
-                OpenRGBDevice controller = client.GetControllerData(i);
+                Device controller = client.GetControllerData(i);
                 Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
             }
             sw.Stop();
@@ -76,7 +76,7 @@ namespace OpenRGB.NET.Test
             Stopwatch sw = Stopwatch.StartNew();
             var client = new OpenRGBClient(name: "OpenRGB.NET Test: CheckLedChange");
             var controllerCount = client.GetControllerCount();
-            var devices = new OpenRGBDevice[controllerCount];
+            var devices = new Device[controllerCount];
 
             for (int i = 0; i < controllerCount; i++)
                 devices[i] = client.GetControllerData(i);
@@ -85,7 +85,7 @@ namespace OpenRGB.NET.Test
             {
                 var device = devices[i];
 
-                var originalColors = OpenRGBColor.GetHueRainbow(device.Leds.Length);
+                var originalColors = Color.GetHueRainbow(device.Leds.Length);
 
                 client.UpdateLeds(i, originalColors.ToArray());
                 var updatedColors = client.GetControllerData(i).Colors;
@@ -107,7 +107,7 @@ namespace OpenRGB.NET.Test
             Stopwatch sw = Stopwatch.StartNew();
             var client = new OpenRGBClient(name: "OpenRGB.NET Test: UpdateZoneTypes");
             var controllerCount = client.GetControllerCount();
-            var devices = new OpenRGBDevice[controllerCount];
+            var devices = new Device[controllerCount];
 
             for (int i = 0; i < controllerCount; i++)
                 devices[i] = client.GetControllerData(i);
@@ -122,18 +122,18 @@ namespace OpenRGB.NET.Test
                     switch (zone.Type)
                     {
                         case Enums.ZoneType.Linear:
-                            var colors = OpenRGBColor.GetHueRainbow((int)zone.LedCount);
+                            var colors = Color.GetHueRainbow((int)zone.LedCount);
                             client.UpdateZone(i, j, colors.ToArray());
                             break;
                         case Enums.ZoneType.Single:
-                            client.UpdateZone(i, j, new[] { new OpenRGBColor(255, 0, 0) });
+                            client.UpdateZone(i, j, new[] { new Color(255, 0, 0) });
                             break;
                         case Enums.ZoneType.Matrix:
                             var yeet = 2 * Math.PI / zone.MatrixMap.Width;
                             //var rainbow = OpenRGBColor.GetHueRainbow((int)zone.MatrixMap.Width).ToArray();
-                            var rainbow = OpenRGBColor.GetSinRainbow((int)zone.MatrixMap.Width).ToArray();
+                            var rainbow = Color.GetSinRainbow((int)zone.MatrixMap.Width).ToArray();
 
-                            var matrix = Enumerable.Range(0, (int)zone.LedCount).Select(_ => new OpenRGBColor()).ToArray();
+                            var matrix = Enumerable.Range(0, (int)zone.LedCount).Select(_ => new Color()).ToArray();
                             for (int k = 0; k < zone.MatrixMap.Width; k++)
                             {
                                 for (int l = 0; l < zone.MatrixMap.Height; l++)
@@ -174,7 +174,7 @@ namespace OpenRGB.NET.Test
                 int nbController = client.GetControllerCount();
                 for (int j = 0; j < nbController; j++)
                 {
-                    OpenRGBDevice controller = client.GetControllerData(j);
+                    Device controller = client.GetControllerData(j);
                     Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
                 }
             }

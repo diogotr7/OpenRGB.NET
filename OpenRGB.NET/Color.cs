@@ -4,20 +4,20 @@ using System.Linq;
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBColor : IEquatable<OpenRGBColor>
+    public class Color : IEquatable<Color>
     {
         public byte R { get; set; }
         public byte G { get; set; }
         public byte B { get; set; }
 
-        public OpenRGBColor(byte red = 0, byte green = 0, byte blue = 0)
+        public Color(byte red = 0, byte green = 0, byte blue = 0)
         {
             R = red;
             G = green;
             B = blue;
         }
 
-        public static OpenRGBColor FromHsv(double hue, double saturation, double value)
+        public static Color FromHsv(double hue, double saturation, double value)
         {
             if (saturation < 0 || saturation > 1)
                 throw new ArgumentOutOfRangeException(nameof(saturation));
@@ -36,17 +36,17 @@ namespace OpenRGB.NET
             switch (hi)
             {
                 case 0:
-                    return new OpenRGBColor(v, t, p);
+                    return new Color(v, t, p);
                 case 1:
-                    return new OpenRGBColor(q, v, p);
+                    return new Color(q, v, p);
                 case 2:
-                    return new OpenRGBColor(p, v, t);
+                    return new Color(p, v, t);
                 case 3:
-                    return new OpenRGBColor(p, q, v);
+                    return new Color(p, q, v);
                 case 4:
-                    return new OpenRGBColor(t, p, v);
+                    return new Color(t, p, v);
                 default:
-                    return new OpenRGBColor(v, p, q);
+                    return new Color(v, p, q);
             }
         }
 
@@ -74,13 +74,13 @@ namespace OpenRGB.NET
             return (hue, saturation, value);
         }
 
-        internal static OpenRGBColor[] Decode(byte[] buffer, ref int offset, ushort colorCount)
+        internal static Color[] Decode(byte[] buffer, ref int offset, ushort colorCount)
         {
-            var colors = new List<OpenRGBColor>(colorCount);
+            var colors = new List<Color>(colorCount);
 
             for (int i = 0; i < colorCount; i++)
             {
-                colors.Add(new OpenRGBColor
+                colors.Add(new Color
                 {
                     R = buffer[offset],
                     G = buffer[offset + 1],
@@ -103,14 +103,14 @@ namespace OpenRGB.NET
             };
         }
 
-        public static IEnumerable<OpenRGBColor> GetHueRainbow(int amount, double hueStart = 0, double huePercent = 1.0,
+        public static IEnumerable<Color> GetHueRainbow(int amount, double hueStart = 0, double huePercent = 1.0,
                                                                 double saturation = 1.0, double value = 1.0) =>
             Enumerable.Range(0, amount)
                       .Select(i => FromHsv(hueStart + (360.0d * huePercent / amount * i), saturation, value));
 
-        public static IEnumerable<OpenRGBColor> GetSinRainbow(int amount, int floor = 127, int width = 128, double range = 1.0, double offset = Math.PI / 2) =>
+        public static IEnumerable<Color> GetSinRainbow(int amount, int floor = 127, int width = 128, double range = 1.0, double offset = Math.PI / 2) =>
             Enumerable.Range(0, amount)
-                      .Select(i => new OpenRGBColor(
+                      .Select(i => new Color(
                             (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + 0)),
                             (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + (2 * Math.PI / 3))),
                             (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + (4 * Math.PI / 3)))
@@ -121,11 +121,11 @@ namespace OpenRGB.NET
             return $"R:{R}, G:{G}, B:{B} ";
         }
 
-        public bool Equals(OpenRGBColor other) =>
+        public bool Equals(Color other) =>
             this.R == other.R &&
             this.G == other.G &&
             this.B == other.B;
 
-        public OpenRGBColor Clone() => new OpenRGBColor(R, G, B);
+        public Color Clone() => new Color(R, G, B);
     }
 }

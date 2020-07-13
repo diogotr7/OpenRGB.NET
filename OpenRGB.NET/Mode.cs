@@ -3,7 +3,7 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBMode
+    public class Mode
     {
         public string Name { get; private set; }
         public int Value { get; private set; }
@@ -15,17 +15,17 @@ namespace OpenRGB.NET
         public uint Speed { get; private set; }
         public Direction Direction { get; private set; }
         public ColorMode ColorMode { get; private set; }
-        public OpenRGBColor[] Colors { get; private set; }
+        public Color[] Colors { get; private set; }
 
         public bool HasFlag(ModeFlags flag) => (Flags & flag) != 0;
 
-        internal static OpenRGBMode[] Decode(byte[] buffer, ref int offset, uint numModes)
+        internal static Mode[] Decode(byte[] buffer, ref int offset, uint numModes)
         {
-            var modes = new OpenRGBMode[numModes];
+            var modes = new Mode[numModes];
 
             for (int i = 0; i < numModes; i++)
             {
-                modes[i] = new OpenRGBMode();
+                modes[i] = new Mode();
 
                 modes[i].Name = buffer.GetString(ref offset);
 
@@ -48,7 +48,7 @@ namespace OpenRGB.NET
                 modes[i].ColorMode = (ColorMode)buffer.GetUInt32(ref offset);
 
                 ushort colorCount = buffer.GetUInt16(ref offset);
-                modes[i].Colors = OpenRGBColor.Decode(buffer, ref offset, colorCount);
+                modes[i].Colors = Color.Decode(buffer, ref offset, colorCount);
 
                 if (modes[i].HasFlag(ModeFlags.HasSpeed))
                 {

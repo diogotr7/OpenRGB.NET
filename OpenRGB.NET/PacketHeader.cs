@@ -3,7 +3,7 @@ using System.Text;
 
 namespace OpenRGB.NET
 {
-    public class OpenRGBPacketHeader
+    public class PacketHeader
     {
         public const int Size = 16;
 
@@ -11,7 +11,7 @@ namespace OpenRGB.NET
         public uint Command { get; }
         public uint DataLength { get; }
 
-        internal OpenRGBPacketHeader(uint deviceId, uint command, uint length)
+        internal PacketHeader(uint deviceId, uint command, uint length)
         {
             DeviceId = deviceId;
             Command = command;
@@ -30,14 +30,14 @@ namespace OpenRGB.NET
             return arr;
         }
 
-        internal static OpenRGBPacketHeader Decode(byte[] buffer)
+        internal static PacketHeader Decode(byte[] buffer)
         {
             if (buffer.Length != Size)
                 throw new ArgumentException($"{nameof(buffer)} has length {buffer.Length}, should be {Size}");
             if (Encoding.ASCII.GetString(buffer, 0, 4) != "ORGB")
                 throw new ArgumentException("Magic bytes \"ORGB\" were not found");
 
-            return new OpenRGBPacketHeader(
+            return new PacketHeader(
                 BitConverter.ToUInt32(buffer, 4),
                 BitConverter.ToUInt32(buffer, 8),
                 BitConverter.ToUInt32(buffer, 12)

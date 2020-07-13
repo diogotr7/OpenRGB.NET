@@ -1,5 +1,8 @@
 ﻿namespace OpenRGB.NET.Enums
 {
+    /// <summary>
+    /// Enum representing the various directions a specific mode can have.
+    /// </summary>
     public enum Direction
     {
         None = -1,

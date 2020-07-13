@@ -108,7 +108,7 @@ namespace OpenRGB.NET
             Enumerable.Range(0, amount)
                       .Select(i => FromHsv(hueStart + (360.0d * huePercent / amount * i), saturation, value));
 
-        public static IEnumerable<OpenRGBColor> GetSinRainbow(int amount, int floor = 127, int width = 128, double range = 1.0, double offset = Math.PI/2) =>
+        public static IEnumerable<OpenRGBColor> GetSinRainbow(int amount, int floor = 127, int width = 128, double range = 1.0, double offset = Math.PI / 2) =>
             Enumerable.Range(0, amount)
                       .Select(i => new OpenRGBColor(
                             (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + 0)),

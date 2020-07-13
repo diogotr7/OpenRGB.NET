@@ -1,4 +1,6 @@
-﻿namespace OpenRGB.NET
+﻿using OpenRGB.NET.Utils;
+
+namespace OpenRGB.NET
 {
     public class OpenRGBMatrixMap
     {

@@ -1,5 +1,5 @@
 ﻿using OpenRGB.NET.Enums;
-using System.Collections.Generic;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET
 {

@@ -1,3 +1,5 @@
+using OpenRGB.NET.Utils;
+
 namespace OpenRGB.NET
 {
     public class OpenRGBLed

@@ -3,6 +3,9 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET.Models
 {
+    /// <summary>
+    /// Zone class containing the name, type and size of a Zone.
+    /// </summary>
     public class Zone
     {
         public string Name { get; private set; }
@@ -12,6 +15,14 @@ namespace OpenRGB.NET.Models
         public uint LedsMax { get; private set; }
         public MatrixMap MatrixMap { get; private set; }
 
+        /// <summary>
+        /// Decodes a byte array into a Zone array.
+        /// Increments the offset accordingly
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="zoneCount"></param>
+        /// <returns></returns>
         internal static Zone[] Decode(byte[] buffer, ref int offset, ushort zoneCount)
         {
             var zones = new Zone[zoneCount];

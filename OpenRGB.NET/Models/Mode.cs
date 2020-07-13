@@ -3,6 +3,9 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET.Models
 {
+    /// <summary>
+    /// Mode class containing the parameters one mode has.
+    /// </summary>
     public class Mode
     {
         public string Name { get; private set; }
@@ -19,6 +22,14 @@ namespace OpenRGB.NET.Models
 
         public bool HasFlag(ModeFlags flag) => (Flags & flag) != 0;
 
+        /// <summary>
+        /// Decodes a byte array into a Mode array.
+        /// Increments the offset accordingly.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="numModes"></param>
+        /// <returns></returns>
         internal static Mode[] Decode(byte[] buffer, ref int offset, uint numModes)
         {
             var modes = new Mode[numModes];

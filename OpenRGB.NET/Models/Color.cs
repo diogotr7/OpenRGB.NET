@@ -4,10 +4,24 @@ using System.Linq;
 
 namespace OpenRGB.NET.Models
 {
+    /// <summary>
+    /// Color class containing three values for red, green and blue.
+    /// </summary>
     public class Color : IEquatable<Color>
-    {
+    { 
+        /// <summary>
+        /// Red value of the color.
+        /// </summary>
         public byte R { get; set; }
+
+        /// <summary>
+        /// Green value of the color.
+        /// </summary>
         public byte G { get; set; }
+
+        /// <summary>
+        /// Blue value of the color.
+        /// </summary>
         public byte B { get; set; }
 
         public Color(byte red = 0, byte green = 0, byte blue = 0)
@@ -17,6 +31,13 @@ namespace OpenRGB.NET.Models
             B = blue;
         }
 
+        /// <summary>
+        /// Method used to create a color from HSV values.
+        /// </summary>
+        /// <param name="hue"></param>
+        /// <param name="saturation"></param>
+        /// <param name="value"></param>
+        /// <returns>The color converted to RGB</returns>
         public static Color FromHsv(double hue, double saturation, double value)
         {
             if (saturation < 0 || saturation > 1)
@@ -50,6 +71,10 @@ namespace OpenRGB.NET.Models
             }
         }
 
+        /// <summary>
+        /// Converts a color to HSV.
+        /// </summary>
+        /// <returns>Tuple with the HSV values</returns>
         public (double h, double s, double v) ToHsv()
         {
             var max = Math.Max(R, Math.Max(G, B));
@@ -74,24 +99,36 @@ namespace OpenRGB.NET.Models
             return (hue, saturation, value);
         }
 
+        /// <summary>
+        /// Decodes a byte array into a color array.
+        /// Increments the offset accordingly.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="colorCount"></param>
+        /// <returns>An array of Colors decoded from bytes</returns>
         internal static Color[] Decode(byte[] buffer, ref int offset, ushort colorCount)
         {
-            var colors = new List<Color>(colorCount);
+            var colors = new Color[colorCount];
 
             for (int i = 0; i < colorCount; i++)
             {
-                colors.Add(new Color
+                colors[i] = new Color
                 {
                     R = buffer[offset],
                     G = buffer[offset + 1],
                     B = buffer[offset + 2]
                     //Alpha = buffer[offset + 3]
-                });
+                };
                 offset += 4 * sizeof(byte);
             }
-            return colors.ToArray();
+            return colors;
         }
 
+        /// <summary>
+        /// Encodes a color into a 4 byte array
+        /// </summary>
+        /// <returns></returns>
         internal byte[] Encode()
         {
             return new byte[]
@@ -103,11 +140,31 @@ namespace OpenRGB.NET.Models
             };
         }
 
+        /// <summary>
+        /// Generates a smooth rainbow with the given amount of colors.
+        /// Uses HSV conversion to get a hue-based rainbow.
+        /// </summary>
+        /// <param name="amount">How many colors to generate.</param>
+        /// <param name="hueStart">The hue of the first color</param>
+        /// <param name="huePercent">How much of the hue scale to use.</param>
+        /// <param name="saturation">The HSV saturation of the colors</param>
+        /// <param name="value">The HSV value of the colors.</param>
+        /// <returns>An collection of Colors in a rainbow pattern.</returns>
         public static IEnumerable<Color> GetHueRainbow(int amount, double hueStart = 0, double huePercent = 1.0,
                                                                 double saturation = 1.0, double value = 1.0) =>
             Enumerable.Range(0, amount)
                       .Select(i => FromHsv(hueStart + (360.0d * huePercent / amount * i), saturation, value));
 
+        /// <summary>
+        /// Generates a smooth rainbow with the given amount of colors.
+        /// Uses sine waves to generate the pattern.
+        /// </summary>
+        /// <param name="amount">How many colors to generate.</param>
+        /// <param name="floor">The least bright any given RGB value can be.</param>
+        /// <param name="width">The brightness variation of any given RGB value.</param>
+        /// <param name="range">How much of the sine wave is used to generate the colors. Decrese this value to get a fraction of the spectrum. In percent.</param>
+        /// <param name="offset">The value the first color of the sequence will be generated with.</param>
+        /// <returns>A collection of Colors in a rainbow pattern.</returns>
         public static IEnumerable<Color> GetSinRainbow(int amount, int floor = 127, int width = 128, double range = 1.0, double offset = Math.PI / 2) =>
             Enumerable.Range(0, amount)
                       .Select(i => new Color(

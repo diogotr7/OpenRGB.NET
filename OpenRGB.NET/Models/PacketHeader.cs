@@ -3,6 +3,9 @@ using System.Text;
 
 namespace OpenRGB.NET.Models
 {
+    /// <summary>
+    /// Packet Header class containing the command ID and the length of the data to be sent.
+    /// </summary>
     public class PacketHeader
     {
         public const int Size = 16;
@@ -18,6 +21,10 @@ namespace OpenRGB.NET.Models
             DataLength = length;
         }
 
+        /// <summary>
+        /// Converts the packet into a byte array to send to the server.
+        /// </summary>
+        /// <returns></returns>
         internal byte[] Encode()
         {
             var arr = new byte[Size];
@@ -30,6 +37,11 @@ namespace OpenRGB.NET.Models
             return arr;
         }
 
+        /// <summary>
+        /// Decodes a byte array into a PacketHeader
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <returns></returns>
         internal static PacketHeader Decode(byte[] buffer)
         {
             if (buffer.Length != Size)

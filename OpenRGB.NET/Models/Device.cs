@@ -3,6 +3,9 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET.Models
 {
+    /// <summary>
+    /// Device class containing all the info present in an OpenRGB RGBController
+    /// </summary>
     public class Device
     {
         public DeviceType Type { get; private set; }
@@ -19,6 +22,11 @@ namespace OpenRGB.NET.Models
 
         public Mode ActiveMode => Modes[ActiveModeIndex];
 
+        /// <summary>
+        /// Decodes a byte array into a Device.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <returns></returns>
         internal static Device Decode(byte[] buffer)
         {
             var dev = new Device();

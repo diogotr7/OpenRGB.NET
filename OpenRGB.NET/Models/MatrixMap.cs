@@ -2,12 +2,21 @@
 
 namespace OpenRGB.NET.Models
 {
+    /// <summary>
+    /// Matrix Map class for the matrix Zone type
+    /// </summary>
     public class MatrixMap
     {
         public uint Height { get; private set; }
         public uint Width { get; private set; }
         public uint[,] Matrix { get; private set; }
 
+        /// <summary>
+        /// Decodes a byte array into a matrix map
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         internal static MatrixMap Decode(byte[] buffer, ref int offset)
         {
             var matx = new MatrixMap();

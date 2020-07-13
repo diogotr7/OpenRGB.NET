@@ -1,7 +1,7 @@
 ﻿using OpenRGB.NET.Enums;
 using OpenRGB.NET.Utils;
 
-namespace OpenRGB.NET
+namespace OpenRGB.NET.Models
 {
     public class Mode
     {

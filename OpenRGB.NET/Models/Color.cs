@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenRGB.NET
+namespace OpenRGB.NET.Models
 {
     public class Color : IEquatable<Color>
     {

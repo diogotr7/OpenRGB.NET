@@ -1,6 +1,6 @@
 ﻿using OpenRGB.NET.Utils;
 
-namespace OpenRGB.NET
+namespace OpenRGB.NET.Models
 {
     public class MatrixMap
     {

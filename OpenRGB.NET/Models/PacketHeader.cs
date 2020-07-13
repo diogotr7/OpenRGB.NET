@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace OpenRGB.NET
+namespace OpenRGB.NET.Models
 {
     public class PacketHeader
     {

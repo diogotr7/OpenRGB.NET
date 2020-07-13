@@ -16,7 +16,7 @@
         Linear,
 
         /// <summary>
-        /// This zone represents a matrix of LED's in a grid, like a keyboard.
+        /// This zone represents a matrix of LEDs in a grid, like a keyboard.
         /// </summary>
         Matrix
     }

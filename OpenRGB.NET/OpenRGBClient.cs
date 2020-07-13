@@ -7,6 +7,9 @@ using OpenRGB.NET.Models;
 
 namespace OpenRGB.NET
 {
+    /// <summary>
+    /// Client for the OpenRGB SDK.
+    /// </summary>
     public class OpenRGBClient : IDisposable
     {
         private readonly string _ip;
@@ -16,9 +19,21 @@ namespace OpenRGB.NET
         private readonly int _timeout;
         private bool disposed;
 
+        /// <summary>
+        /// Represents the connection status of the socket to the server
+        /// </summary>
         public bool Connected => _socket?.Connected ?? false;
 
         #region Basic init methods
+        /// <summary>
+        /// Sets all the needed parameters to connect to the server.
+        /// Connects to the server immediately unless autoconnect is set to false.
+        /// </summary>
+        /// <param name="ip"></param>
+        /// <param name="port"></param>
+        /// <param name="name"></param>
+        /// <param name="autoconnect"></param>
+        /// <param name="timeout"></param>
         public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000)
         {
             _ip = ip;
@@ -30,6 +45,10 @@ namespace OpenRGB.NET
             if (autoconnect) Connect();
         }
 
+        /// <summary>
+        /// Connects manually to the server. Only needs to be called if the constructor was called
+        /// with autoconnect set to false.
+        /// </summary>
         public void Connect()
         {
             if (Connected)
@@ -58,6 +77,13 @@ namespace OpenRGB.NET
         #endregion
 
         #region Basic Comms methods
+        /// <summary>
+        /// Sends a message to the server with the given command and buffer of data.
+        /// Takes care of sending a header packet first to tell the server how many bytes to read.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="buffer"></param>
+        /// <param name="deviceId"></param>
         private void SendMessage(CommandId command, IEnumerable<byte> buffer = null, uint deviceId = 0)
         {
             //we can send the header right away. it contains the command we are sending
@@ -85,6 +111,10 @@ namespace OpenRGB.NET
             return;
         }
 
+        /// <summary>
+        /// Reads data from the server. Receives the header packet first to know how many bytes to read.
+        /// </summary>
+        /// <returns>the data received from the server</returns>
         private byte[] ReadMessage()
         {
             //we need a byte buffer to store the header
@@ -106,12 +136,21 @@ namespace OpenRGB.NET
         #endregion
 
         #region Request Methods
+        /// <summary>
+        /// Requests the controller count from the server.
+        /// </summary>
+        /// <returns>The amount of controllers.</returns>
         public int GetControllerCount()
         {
             SendMessage(CommandId.RequestControllerCount);
             return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
+        /// <summary>
+        /// Requests the data block for a given controller index.
+        /// </summary>
+        /// <param name="id">The index of the controller to request the data from.</param>
+        /// <returns>The Device containing the decoded data for the controller with the given id.</returns>
         public Device GetControllerData(int id)
         {
             if (id < 0)
@@ -121,6 +160,10 @@ namespace OpenRGB.NET
             return Device.Decode(ReadMessage());
         }
 
+        /// <summary>
+        /// Requests the data for all the controllers detected by the server.
+        /// </summary>
+        /// <returns>An array with the information for all the devices.</returns>
         public Device[] GetAllControllerData()
         {
             var count = GetControllerCount();
@@ -134,6 +177,12 @@ namespace OpenRGB.NET
         #endregion
 
         #region Update Methods
+        /// <summary>
+        /// Updates the LEDs for the give device.
+        /// Make sure the array has the correct number of LEDs.
+        /// </summary>
+        /// <param name="deviceId"></param>
+        /// <param name="colors"></param>
         public void UpdateLeds(int deviceId, Color[] colors)
         {
             if (colors is null)
@@ -162,6 +211,13 @@ namespace OpenRGB.NET
             SendMessage(CommandId.UpdateLeds, bytes, (uint)deviceId);
         }
 
+        /// <summary>
+        /// Updates the LEDs of a given device and zone.
+        /// Make sure the array has the correct number of LEDs for the zone.
+        /// </summary>
+        /// <param name="deviceId"></param>
+        /// <param name="zoneId"></param>
+        /// <param name="colors"></param>
         public void UpdateZone(int deviceId, int zoneId, Color[] colors)
         {
             if (colors is null)
@@ -214,6 +270,10 @@ namespace OpenRGB.NET
             }
         }
 
+        /// <summary>
+        /// Disposes of the connection to the server.
+        /// To connect again, instantiate a new OpenRGBClient.
+        /// </summary>
         public void Dispose()
         {
             Dispose(disposing: true);

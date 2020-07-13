@@ -3,6 +3,11 @@ using System.Text;
 
 namespace OpenRGB.NET.Utils
 {
+    /// <summary>
+    /// Helper class to ease reading of values from byte arrays.
+    /// Increments the offset passed by referenced according to the
+    /// date type of the value it read.
+    /// </summary>
     internal static class BufferReader
     {
         internal static int GetInt32(this byte[] buffer, ref int offset)

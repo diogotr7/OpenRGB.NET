@@ -1,9 +1,9 @@
-﻿using System;
+﻿using OpenRGB.NET.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using OpenRGB.NET.Models;
 
 namespace OpenRGB.NET
 {
@@ -249,6 +249,62 @@ namespace OpenRGB.NET
                 colors[i].Encode().CopyTo(bytes, GetIndex(i));
 
             SendMessage(CommandId.UpdateZoneLeds, bytes, (uint)deviceId);
+        }
+
+        public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
+
+        public void SetMode(int deviceId, int modeId)
+        {
+            var targetDevice = GetControllerData(deviceId);
+            if (modeId > targetDevice.Modes.Length)
+                throw new ArgumentException(nameof(modeId));
+            var targetMode = targetDevice.Modes[modeId];
+
+            ushort nameLength = (ushort)(targetMode.Name.Length + 1);
+            ushort numColors = (ushort)targetMode.Colors.Length;
+
+            uint dataSize = 0;
+            dataSize += sizeof(uint);//sizeof(datasize)
+            dataSize += sizeof(int);//modeIndex
+            dataSize += sizeof(ushort);//name length
+            dataSize += nameLength;
+            dataSize += sizeof(int);//Value
+            dataSize += sizeof(uint);//Flags
+            dataSize += sizeof(uint);//SpeedMin
+            dataSize += sizeof(uint);//SpeedMax
+            dataSize += sizeof(uint);//ColorMin
+            dataSize += sizeof(uint);//ColorMax
+            dataSize += sizeof(uint);//Speed
+            dataSize += sizeof(uint);//Direction
+            dataSize += sizeof(uint);//ColorMode
+            dataSize += sizeof(ushort);//colors length
+            dataSize += (ushort)(numColors * sizeof(uint));//each color is sizeof(uint) bytes
+
+            List<byte> bytes = new List<byte>();
+
+            bytes.AddRange(BitConverter.GetBytes(dataSize));
+            bytes.AddRange(BitConverter.GetBytes(modeId));
+            bytes.AddRange(BitConverter.GetBytes(nameLength));
+            bytes.AddRange(Encoding.ASCII.GetBytes(targetMode.Name + '\0'));
+            bytes.AddRange(BitConverter.GetBytes(targetMode.Value));
+            bytes.AddRange(BitConverter.GetBytes((uint)targetMode.Flags));
+            bytes.AddRange(BitConverter.GetBytes(targetMode.SpeedMin));
+            bytes.AddRange(BitConverter.GetBytes(targetMode.SpeedMax));
+            bytes.AddRange(BitConverter.GetBytes(targetMode.ColorMin));
+            bytes.AddRange(BitConverter.GetBytes(targetMode.ColorMax));
+            bytes.AddRange(BitConverter.GetBytes(targetMode.Speed));
+            bytes.AddRange(BitConverter.GetBytes((uint)targetMode.Direction));
+            bytes.AddRange(BitConverter.GetBytes((uint)targetMode.ColorMode));
+            bytes.AddRange(BitConverter.GetBytes(numColors));
+
+            for (int i = 0; i < targetMode.Colors.Length; i++)
+            {
+                bytes.AddRange(targetMode.Colors[i].Encode());
+            }
+            if (bytes.Count != dataSize)
+                throw new InvalidOperationException($"Unexpected array size when setting mode \"{targetMode.Name}\" on device \"{targetDevice.Name}\". Please report this to the author");
+
+            SendMessage(CommandId.UpdateMode, bytes.ToArray(), (uint)deviceId);
         }
         #endregion
 

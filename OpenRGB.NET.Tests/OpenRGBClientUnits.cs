@@ -131,8 +131,8 @@ namespace OpenRGB.NET.Test
                             break;
                         case Enums.ZoneType.Matrix:
                             var yeet = 2 * Math.PI / zone.MatrixMap.Width;
-                            //var rainbow = OpenRGBColor.GetHueRainbow((int)zone.MatrixMap.Width).ToArray();
-                            var rainbow = Color.GetSinRainbow((int)zone.MatrixMap.Width).ToArray();
+                            var rainbow = Color.GetHueRainbow((int)zone.MatrixMap.Width).ToArray();
+                            //var rainbow = Color.GetSinRainbow((int)zone.MatrixMap.Width).ToArray();
 
                             var matrix = Enumerable.Range(0, (int)zone.LedCount).Select(_ => new Color()).ToArray();
                             for (int k = 0; k < zone.MatrixMap.Width; k++)
@@ -153,6 +153,19 @@ namespace OpenRGB.NET.Test
             }
             client.Dispose();
             sw.Stop();
+            Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
+        }
+
+        [Fact]
+        public void SetMode()
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            using var client = new OpenRGBClient();
+            var devices = client.GetAllControllerData();
+
+            //for testing purposes
+            client.SetMode(0, 4);
+
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
         }
 

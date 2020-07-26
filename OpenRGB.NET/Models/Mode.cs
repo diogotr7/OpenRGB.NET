@@ -88,5 +88,12 @@ namespace OpenRGB.NET.Models
 
             return modes;
         }
+
+        internal uint Size => (uint)(
+            sizeof(int) * 2 +
+            sizeof(uint) * 9 +
+            sizeof(ushort) * 2 +
+            sizeof(uint) * Colors.Length +
+            Name.Length + 1);
     }
 }

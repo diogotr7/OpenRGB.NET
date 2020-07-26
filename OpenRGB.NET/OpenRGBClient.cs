@@ -272,26 +272,7 @@ namespace OpenRGB.NET
 
             var targetMode = targetDevice.Modes[modeId];
 
-            ushort nameLength = (ushort)(targetMode.Name.Length + 1);
-            ushort numColors = (ushort)targetMode.Colors.Length;
-
-            uint dataSize = 0;
-            dataSize += sizeof(uint);//sizeof(datasize)
-            dataSize += sizeof(int);//modeIndex
-            dataSize += sizeof(ushort);//sizeof(name length)
-            dataSize += nameLength;//Name.Length
-            dataSize += sizeof(int);//Value
-            dataSize += sizeof(uint);//Flags
-            dataSize += sizeof(uint);//SpeedMin
-            dataSize += sizeof(uint);//SpeedMax
-            dataSize += sizeof(uint);//ColorMin
-            dataSize += sizeof(uint);//ColorMax
-            dataSize += sizeof(uint);//Speed
-            dataSize += sizeof(uint);//Direction
-            dataSize += sizeof(uint);//ColorMode
-            dataSize += sizeof(ushort);//colors length
-            dataSize += (ushort)(numColors * sizeof(uint));//each color is sizeof(uint) bytes
-
+            var dataSize = targetMode.Size;
             var arr = new byte[dataSize];
             int offset = 0;
 
@@ -307,7 +288,7 @@ namespace OpenRGB.NET
             arr.Set(ref offset, targetMode.Speed);
             arr.Set(ref offset, (uint)targetMode.Direction);
             arr.Set(ref offset, (uint)targetMode.ColorMode);
-            arr.Set(ref offset, numColors);
+            arr.Set(ref offset, (ushort)targetMode.Colors.Length);
             for (int i = 0; i < targetMode.Colors.Length; i++)
             {
                 arr.Set(ref offset, targetMode.Colors[i].Encode());

@@ -1,4 +1,5 @@
-﻿using OpenRGB.NET.Models;
+﻿using OpenRGB.NET.Enums;
+using OpenRGB.NET.Models;
 using OpenRGB.NET.Utils;
 using System;
 using System.Collections.Generic;
@@ -260,10 +261,17 @@ namespace OpenRGB.NET
 
         /// <summary>
         /// Sets the specified mode on the specified device.
+        /// Any optional parameters not set will be left as received from the server.
         /// </summary>
         /// <param name="deviceId"></param>
         /// <param name="modeId"></param>
-        public void SetMode(int deviceId, int modeId)
+        /// <param name="speed"></param>
+        /// <param name="direction"></param>
+        /// <param name="colors"></param>
+        public void SetMode(int deviceId, int modeId,
+            uint? speed = null,
+            Direction? direction = null,
+            Color[] colors = null)
         {
             var targetDevice = GetControllerData(deviceId);
 
@@ -272,7 +280,29 @@ namespace OpenRGB.NET
 
             var targetMode = targetDevice.Modes[modeId];
 
-            var dataSize = targetMode.Size;
+            if (speed.HasValue)
+            {
+                if (!targetMode.HasFlag(ModeFlags.HasSpeed))
+                    throw new InvalidOperationException("Cannot set speed on a mode that doesn't use this parameter");
+
+                targetMode.Speed = speed.Value;
+            }
+            if (direction.HasValue)
+            {
+                if (!targetMode.HasFlag(ModeFlags.HasDirection))
+                    throw new InvalidOperationException("Cannot set direction on a mode that doesn't use this parameter");
+
+                targetMode.Direction = direction.Value;
+            }
+            if (colors != null)
+            {
+                if (colors.Length != targetMode.Colors.Length)
+                    throw new InvalidOperationException("Incorrect number of colors supplied");
+
+                targetMode.Colors = colors;
+            }
+
+            uint dataSize = targetMode.Size;
             var arr = new byte[dataSize];
             int offset = 0;
 

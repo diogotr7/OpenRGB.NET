@@ -169,9 +169,11 @@ namespace OpenRGB.NET.Test
             {
                 for (int j = 0; j < devices[i].Modes.Length; j++)
                 {
-                    if (!devices[i].Modes[j].Flags.HasFlag(ModeFlags.HasModeSpecificColor))
+                    var mode = devices[i].Modes[j];
+                    if (mode.HasFlag(ModeFlags.HasModeSpecificColor) && mode.HasFlag(ModeFlags.HasSpeed))
                     {
-                        client.SetMode(i, j);
+                        var len = (int)mode.ColorMax;
+                        client.SetMode(i, j,speed: mode.SpeedMax, colors: Enumerable.Range(0, len).Select(_ => new Color(0,255,0)).ToArray());
                         break;
                     }
                 }

@@ -15,10 +15,10 @@ namespace OpenRGB.NET.Models
         public uint SpeedMax { get; private set; }
         public uint ColorMin { get; private set; }
         public uint ColorMax { get; private set; }
-        public uint Speed { get; private set; }
-        public Direction Direction { get; private set; }
+        public uint Speed { get; set; }
+        public Direction Direction { get; set; }
         public ColorMode ColorMode { get; private set; }
-        public Color[] Colors { get; private set; }
+        public Color[] Colors { get; set; }
 
         public bool HasFlag(ModeFlags flag) => (Flags & flag) != 0;
 

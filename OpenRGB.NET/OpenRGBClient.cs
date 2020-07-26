@@ -1,4 +1,5 @@
 ﻿using OpenRGB.NET.Models;
+using OpenRGB.NET.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -251,13 +252,24 @@ namespace OpenRGB.NET
             SendMessage(CommandId.UpdateZoneLeds, bytes, (uint)deviceId);
         }
 
+        /// <summary>
+        /// Sets the mode of the specified device to "Custom".
+        /// </summary>
+        /// <param name="deviceId"></param>
         public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
 
+        /// <summary>
+        /// Sets the specified mode on the specified device.
+        /// </summary>
+        /// <param name="deviceId"></param>
+        /// <param name="modeId"></param>
         public void SetMode(int deviceId, int modeId)
         {
             var targetDevice = GetControllerData(deviceId);
+
             if (modeId > targetDevice.Modes.Length)
                 throw new ArgumentException(nameof(modeId));
+
             var targetMode = targetDevice.Modes[modeId];
 
             ushort nameLength = (ushort)(targetMode.Name.Length + 1);
@@ -266,8 +278,8 @@ namespace OpenRGB.NET
             uint dataSize = 0;
             dataSize += sizeof(uint);//sizeof(datasize)
             dataSize += sizeof(int);//modeIndex
-            dataSize += sizeof(ushort);//name length
-            dataSize += nameLength;
+            dataSize += sizeof(ushort);//sizeof(name length)
+            dataSize += nameLength;//Name.Length
             dataSize += sizeof(int);//Value
             dataSize += sizeof(uint);//Flags
             dataSize += sizeof(uint);//SpeedMin
@@ -280,31 +292,28 @@ namespace OpenRGB.NET
             dataSize += sizeof(ushort);//colors length
             dataSize += (ushort)(numColors * sizeof(uint));//each color is sizeof(uint) bytes
 
-            List<byte> bytes = new List<byte>();
+            var arr = new byte[dataSize];
+            int offset = 0;
 
-            bytes.AddRange(BitConverter.GetBytes(dataSize));
-            bytes.AddRange(BitConverter.GetBytes(modeId));
-            bytes.AddRange(BitConverter.GetBytes(nameLength));
-            bytes.AddRange(Encoding.ASCII.GetBytes(targetMode.Name + '\0'));
-            bytes.AddRange(BitConverter.GetBytes(targetMode.Value));
-            bytes.AddRange(BitConverter.GetBytes((uint)targetMode.Flags));
-            bytes.AddRange(BitConverter.GetBytes(targetMode.SpeedMin));
-            bytes.AddRange(BitConverter.GetBytes(targetMode.SpeedMax));
-            bytes.AddRange(BitConverter.GetBytes(targetMode.ColorMin));
-            bytes.AddRange(BitConverter.GetBytes(targetMode.ColorMax));
-            bytes.AddRange(BitConverter.GetBytes(targetMode.Speed));
-            bytes.AddRange(BitConverter.GetBytes((uint)targetMode.Direction));
-            bytes.AddRange(BitConverter.GetBytes((uint)targetMode.ColorMode));
-            bytes.AddRange(BitConverter.GetBytes(numColors));
-
+            arr.Set(ref offset, dataSize);
+            arr.Set(ref offset, modeId);
+            arr.Set(ref offset, targetMode.Name);
+            arr.Set(ref offset, targetMode.Value);
+            arr.Set(ref offset, (uint)targetMode.Flags);
+            arr.Set(ref offset, targetMode.SpeedMin);
+            arr.Set(ref offset, targetMode.SpeedMax);
+            arr.Set(ref offset, targetMode.ColorMin);
+            arr.Set(ref offset, targetMode.ColorMax);
+            arr.Set(ref offset, targetMode.Speed);
+            arr.Set(ref offset, (uint)targetMode.Direction);
+            arr.Set(ref offset, (uint)targetMode.ColorMode);
+            arr.Set(ref offset, numColors);
             for (int i = 0; i < targetMode.Colors.Length; i++)
             {
-                bytes.AddRange(targetMode.Colors[i].Encode());
+                arr.Set(ref offset, targetMode.Colors[i].Encode());
             }
-            if (bytes.Count != dataSize)
-                throw new InvalidOperationException($"Unexpected array size when setting mode \"{targetMode.Name}\" on device \"{targetDevice.Name}\". Please report this to the author");
 
-            SendMessage(CommandId.UpdateMode, bytes.ToArray(), (uint)deviceId);
+            SendMessage(CommandId.UpdateMode, arr, (uint)deviceId);
         }
         #endregion
 

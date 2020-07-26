@@ -5,6 +5,7 @@ using System.Threading;
 using Xunit;
 using Xunit.Abstractions;
 using OpenRGB.NET.Models;
+using OpenRGB.NET.Enums;
 
 namespace OpenRGB.NET.Test
 {
@@ -164,7 +165,17 @@ namespace OpenRGB.NET.Test
             var devices = client.GetAllControllerData();
 
             //for testing purposes
-            client.SetMode(0, 4);
+            for (int i = 0; i < devices.Length; i++)
+            {
+                for (int j = 0; j < devices[i].Modes.Length; j++)
+                {
+                    if (!devices[i].Modes[j].Flags.HasFlag(ModeFlags.HasModeSpecificColor))
+                    {
+                        client.SetMode(i, j);
+                        break;
+                    }
+                }
+            }
 
             Output.WriteLine($"Time elapsed: {(double)sw.ElapsedTicks / Stopwatch.Frequency * 1000} ms.");
         }

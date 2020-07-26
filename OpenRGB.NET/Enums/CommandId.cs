@@ -3,7 +3,7 @@
     /// <summary>
     /// Enum representing the various commands supported by the SDK server.
     /// </summary>
-    public enum CommandId
+    internal enum CommandId
     {
         /// <summary>
         /// Request the number of device controllers from the server.
@@ -36,7 +36,7 @@
         UpdateZoneLeds = 1051,
 
         /// <summary>
-        /// Calls RGBController::UpdateSingleLED() on the server.
+        /// Calls RGBController::UpdateSingleLED() on the server. Not implemented.
         /// </summary>
         UpdateSingleLed = 1052,
 

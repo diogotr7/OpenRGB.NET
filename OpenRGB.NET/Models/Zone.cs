@@ -1,5 +1,6 @@
 ﻿using OpenRGB.NET.Enums;
 using OpenRGB.NET.Utils;
+using System.Security;
 
 namespace OpenRGB.NET.Models
 {
@@ -8,11 +9,34 @@ namespace OpenRGB.NET.Models
     /// </summary>
     public class Zone
     {
+        /// <summary>
+        /// The name of the zone.
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// The type of the zone.
+        /// </summary>
         public ZoneType Type { get; private set; }
+
+        /// <summary>
+        /// How many leds the zone has.
+        /// </summary>
         public uint LedCount { get; private set; }
+
+        /// <summary>
+        /// Minimum number of leds in the zone
+        /// </summary>
         public uint LedsMin { get; private set; }
+
+        /// <summary>
+        /// Maximum number of leds in the zone
+        /// </summary>
         public uint LedsMax { get; private set; }
+
+        /// <summary>
+        /// A 2d Matrix containing the LED positions on the zone. Will be null if ZoneType is not ZoneType.MatrixMap
+        /// </summary>
         public MatrixMap MatrixMap { get; private set; }
 
         /// <summary>
@@ -22,7 +46,6 @@ namespace OpenRGB.NET.Models
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <param name="zoneCount"></param>
-        /// <returns></returns>
         internal static Zone[] Decode(byte[] buffer, ref int offset, ushort zoneCount)
         {
             var zones = new Zone[zoneCount];

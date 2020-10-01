@@ -7,7 +7,14 @@ namespace OpenRGB.NET.Models
     /// </summary>
     public class Led
     {
+        /// <summary>
+        /// The name of the led.
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Device specific led value. Most likely not useful for the clients.
+        /// </summary>
         public uint Value { get; private set; }
 
         /// <summary>
@@ -17,7 +24,6 @@ namespace OpenRGB.NET.Models
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <param name="ledCount"></param>
-        /// <returns></returns>
         internal static Led[] Decode(byte[] buffer, ref int offset, ushort ledCount)
         {
             var leds = new Led[ledCount];
@@ -34,6 +40,7 @@ namespace OpenRGB.NET.Models
             return leds;
         }
 
+        /// <inheritdoc/>
         public override string ToString() => $"Name: {Name}, Value: {Value}";
     }
 }

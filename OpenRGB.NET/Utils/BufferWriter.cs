@@ -4,7 +4,7 @@ using System.Text;
 
 namespace OpenRGB.NET.Utils
 {
-    public static class BufferWriter
+    internal static class BufferWriter
     {
         internal static void Set(this byte[] buffer, ref int offset, int data)
         {

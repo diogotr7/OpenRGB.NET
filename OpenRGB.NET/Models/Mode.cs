@@ -8,18 +8,64 @@ namespace OpenRGB.NET.Models
     /// </summary>
     public class Mode
     {
+        /// <summary>
+        /// The name of the mode.
+        /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Device specific value for this mode. Most likely not useful for the client.
+        /// </summary>
         public int Value { get; private set; }
+
+        /// <summary>
+        /// Flags containing the features this mode supports.
+        /// </summary>
         public ModeFlags Flags { get; private set; }
+
+        /// <summary>
+        /// The minimum speed value this mode supports.
+        /// </summary>
         public uint SpeedMin { get; private set; }
+
+        /// <summary>
+        /// The maximum speed value this mode supports.
+        /// </summary>
         public uint SpeedMax { get; private set; }
+
+        /// <summary>
+        /// The minimum number of colors this mode supports.
+        /// </summary>
         public uint ColorMin { get; private set; }
+
+        /// <summary>
+        /// The maximum number of colors this mode supports.
+        /// </summary>
         public uint ColorMax { get; private set; }
+
+        /// <summary>
+        /// The current speed value of this mode.
+        /// </summary>
         public uint Speed { get; set; }
+
+        /// <summary>
+        /// The current direction of this mode.
+        /// </summary>
         public Direction Direction { get; set; }
+
+        /// <summary>
+        /// Mode representing how the Colors are used for effects.
+        /// </summary>
         public ColorMode ColorMode { get; private set; }
+
+        /// <summary>
+        /// The colors this mode uses for lighting.
+        /// </summary>
         public Color[] Colors { get; set; }
 
+        /// <summary>
+        /// Determines if the feature is supported in the flags.
+        /// </summary>
         public bool HasFlag(ModeFlags flag) => (Flags & flag) != 0;
 
         /// <summary>
@@ -29,7 +75,6 @@ namespace OpenRGB.NET.Models
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <param name="numModes"></param>
-        /// <returns></returns>
         internal static Mode[] Decode(byte[] buffer, ref int offset, uint numModes)
         {
             var modes = new Mode[numModes];

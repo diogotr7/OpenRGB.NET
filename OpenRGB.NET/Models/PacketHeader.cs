@@ -6,13 +6,12 @@ namespace OpenRGB.NET.Models
     /// <summary>
     /// Packet Header class containing the command ID and the length of the data to be sent.
     /// </summary>
-    public class PacketHeader
+    internal class PacketHeader
     {
-        public const int Size = 16;
-
-        public uint DeviceId { get; }
-        public uint Command { get; }
-        public uint DataLength { get; }
+        internal const int Size = 16;
+        internal uint DeviceId { get; }
+        internal uint Command { get; }
+        internal uint DataLength { get; }
 
         internal PacketHeader(uint deviceId, uint command, uint length)
         {

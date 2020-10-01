@@ -8,7 +8,7 @@ namespace OpenRGB.NET.Models
     /// Color class containing three values for red, green and blue.
     /// </summary>
     public class Color : IEquatable<Color>
-    { 
+    {
         /// <summary>
         /// Red value of the color.
         /// </summary>
@@ -24,6 +24,9 @@ namespace OpenRGB.NET.Models
         /// </summary>
         public byte B { get; set; }
 
+        /// <summary>
+        /// Constructs a new color with the specified red, gree, and blue values.
+        /// </summary>
         public Color(byte red = 0, byte green = 0, byte blue = 0)
         {
             R = red;
@@ -128,7 +131,6 @@ namespace OpenRGB.NET.Models
         /// <summary>
         /// Encodes a color into a 4 byte array
         /// </summary>
-        /// <returns></returns>
         internal byte[] Encode()
         {
             return new byte[]
@@ -173,16 +175,18 @@ namespace OpenRGB.NET.Models
                             (byte)(floor + width * Math.Sin(offset + (2 * Math.PI * range) / amount * i + (4 * Math.PI / 3)))
                             ));
 
-        public override string ToString()
-        {
-            return $"R:{R}, G:{G}, B:{B} ";
-        }
+        /// <summary>
+        /// Returns a new object with the same color value
+        /// </summary>
+        public Color Clone() => new Color(R, G, B);
 
+        ///<inheritdoc/>
+        public override string ToString() => $"R:{R}, G:{G}, B:{B} ";
+
+        ///<inheritdoc/>
         public bool Equals(Color other) =>
             this.R == other.R &&
             this.G == other.G &&
             this.B == other.B;
-
-        public Color Clone() => new Color(R, G, B);
     }
 }

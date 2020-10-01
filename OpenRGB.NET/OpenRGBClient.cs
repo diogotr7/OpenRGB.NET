@@ -130,8 +130,21 @@ namespace OpenRGB.NET
 
             //we then make a buffer that will receive the data
             var dataBuffer = new byte[header.DataLength];
-            if (_socket.Receive(dataBuffer, (int)header.DataLength, SocketFlags.None) != header.DataLength)
-                throw new Exception("Received wrong amount of bytes in " + nameof(ReadMessage));
+
+            var size = (int)header.DataLength;
+            var total = 0;
+
+            //we might need to receive multiple packets to get all the data
+            while (total < size)
+            {
+                var recv = _socket.Receive(dataBuffer, total, size - total, SocketFlags.None);
+                if(recv == 0)
+                {
+                    break;
+                    //maybe should handle this differently?
+                }
+                total += recv;
+            }
 
             return dataBuffer;
         }
@@ -329,6 +342,7 @@ namespace OpenRGB.NET
         #endregion
 
         #region Dispose
+        /// <inheritdoc/>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)

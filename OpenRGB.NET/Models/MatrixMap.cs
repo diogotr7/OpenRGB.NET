@@ -7,8 +7,19 @@ namespace OpenRGB.NET.Models
     /// </summary>
     public class MatrixMap
     {
+        /// <summary>
+        /// The height of the matrix.
+        /// </summary>
         public uint Height { get; private set; }
+
+        /// <summary>
+        /// The width of the matrix.
+        /// </summary>
         public uint Width { get; private set; }
+
+        /// <summary>
+        /// The matrix.
+        /// </summary>
         public uint[,] Matrix { get; private set; }
 
         /// <summary>
@@ -16,7 +27,6 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
-        /// <returns></returns>
         internal static MatrixMap Decode(byte[] buffer, ref int offset)
         {
             var matx = new MatrixMap();

@@ -1,4 +1,6 @@
 ﻿using OpenRGB.NET.Utils;
+using System;
+using System.IO;
 
 namespace OpenRGB.NET.Models
 {
@@ -25,15 +27,14 @@ namespace OpenRGB.NET.Models
         /// <summary>
         /// Decodes a byte array into a matrix map
         /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        internal static MatrixMap Decode(byte[] buffer, ref int offset)
+        /// <param name="reader"></param>
+        internal static MatrixMap Decode(BinaryReader reader)
         {
             var matx = new MatrixMap();
 
-            matx.Height = buffer.GetUInt32(ref offset);
+            matx.Height = reader.ReadUInt32();
 
-            matx.Width = buffer.GetUInt32(ref offset);
+            matx.Width = reader.ReadUInt32();
 
             matx.Matrix = new uint[matx.Height, matx.Width];
 
@@ -41,7 +42,7 @@ namespace OpenRGB.NET.Models
             {
                 for (int j = 0; j < matx.Width; j++)
                 {
-                    matx.Matrix[i, j] = buffer.GetUInt32(ref offset);
+                    matx.Matrix[i, j] = reader.ReadUInt32();
                 }
             }
 

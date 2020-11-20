@@ -3,6 +3,7 @@ using OpenRGB.NET.Models;
 using OpenRGB.NET.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -316,28 +317,32 @@ namespace OpenRGB.NET
             }
 
             uint dataSize = targetMode.Size;
-            var arr = new byte[dataSize];
-            int offset = 0;
-
-            arr.Set(ref offset, dataSize);
-            arr.Set(ref offset, modeId);
-            arr.Set(ref offset, targetMode.Name);
-            arr.Set(ref offset, targetMode.Value);
-            arr.Set(ref offset, (uint)targetMode.Flags);
-            arr.Set(ref offset, targetMode.SpeedMin);
-            arr.Set(ref offset, targetMode.SpeedMax);
-            arr.Set(ref offset, targetMode.ColorMin);
-            arr.Set(ref offset, targetMode.ColorMax);
-            arr.Set(ref offset, targetMode.Speed);
-            arr.Set(ref offset, (uint)targetMode.Direction);
-            arr.Set(ref offset, (uint)targetMode.ColorMode);
-            arr.Set(ref offset, (ushort)targetMode.Colors.Length);
-            for (int i = 0; i < targetMode.Colors.Length; i++)
+            using (var stream = new MemoryStream(new byte[dataSize]))
             {
-                arr.Set(ref offset, targetMode.Colors[i].Encode());
-            }
+                using (var writer = new BinaryWriter(stream))
+                {
+                    writer.Write(dataSize);
+                    writer.Write(modeId);
+                    writer.WriteLengthAndString(targetMode.Name);
+                    writer.Write(targetMode.Value);
+                    writer.Write((uint)targetMode.Flags);
+                    writer.Write(targetMode.SpeedMin);
+                    writer.Write(targetMode.SpeedMax);
+                    writer.Write(targetMode.ColorMin);
+                    writer.Write(targetMode.ColorMax);
+                    writer.Write(targetMode.Speed);
+                    writer.Write((uint)targetMode.Direction);
+                    writer.Write((uint)targetMode.ColorMode);
+                    writer.Write((ushort)targetMode.Colors.Length);
 
-            SendMessage(CommandId.UpdateMode, arr, (uint)deviceId);
+                    for (int i = 0; i < targetMode.Colors.Length; i++)
+                    {
+                        writer.Write(targetMode.Colors[i].Encode());
+                    }
+
+                    SendMessage(CommandId.UpdateMode, stream.ToArray(), (uint)deviceId);
+                }
+            }
         }
         #endregion
 

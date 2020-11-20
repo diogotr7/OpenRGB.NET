@@ -163,7 +163,7 @@ namespace OpenRGB.NET.Test
             Stopwatch sw = Stopwatch.StartNew();
             using var client = new OpenRGBClient();
             var devices = client.GetAllControllerData();
-
+            client.SetMode(0, 0);
             //for testing purposes
             for (int i = 0; i < devices.Length; i++)
             {

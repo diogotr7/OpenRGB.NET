@@ -15,6 +15,8 @@
         Mousemat,
         Headset,
         HeadsetStand,
+        Gamepad,
+        Light,
         Unknown
     }
 }

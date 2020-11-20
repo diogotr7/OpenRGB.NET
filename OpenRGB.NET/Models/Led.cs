@@ -1,4 +1,6 @@
 using OpenRGB.NET.Utils;
+using System;
+using System.IO;
 
 namespace OpenRGB.NET.Models
 {
@@ -21,10 +23,9 @@ namespace OpenRGB.NET.Models
         /// Decodes a byte array into a LED array.
         /// Increments the offset accordingly.
         /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
+        /// <param name="reader"></param>
         /// <param name="ledCount"></param>
-        internal static Led[] Decode(byte[] buffer, ref int offset, ushort ledCount)
+        internal static Led[] Decode(BinaryReader reader, ushort ledCount)
         {
             var leds = new Led[ledCount];
 
@@ -32,8 +33,8 @@ namespace OpenRGB.NET.Models
             {
                 leds[i] = new Led
                 {
-                    Name = buffer.GetString(ref offset),
-                    Value = buffer.GetUInt32(ref offset)
+                    Name = reader.ReadLengthAndString(),
+                    Value = reader.ReadUInt32()
                 };
             }
 

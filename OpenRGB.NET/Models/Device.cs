@@ -1,5 +1,6 @@
 ﻿using OpenRGB.NET.Enums;
 using OpenRGB.NET.Utils;
+using System.IO;
 
 namespace OpenRGB.NET.Models
 {
@@ -75,34 +76,36 @@ namespace OpenRGB.NET.Models
         internal static Device Decode(byte[] buffer)
         {
             var dev = new Device();
-            int offset = sizeof(uint);
+            using (var reader = new BinaryReader(new MemoryStream(buffer)))
+            {
+                var duplicatePacketLength = reader.ReadUInt32();
 
-            dev.Type = (DeviceType)buffer.GetInt32(ref offset);
+                dev.Type = (DeviceType)reader.ReadInt32();
 
-            dev.Name = buffer.GetString(ref offset);
+                dev.Name = reader.ReadLengthAndString();
 
-            dev.Description = buffer.GetString(ref offset);
+                dev.Description = reader.ReadLengthAndString();
 
-            dev.Version = buffer.GetString(ref offset);
+                dev.Version = reader.ReadLengthAndString();
 
-            dev.Serial = buffer.GetString(ref offset);
+                dev.Serial = reader.ReadLengthAndString();
 
-            dev.Location = buffer.GetString(ref offset);
+                dev.Location = reader.ReadLengthAndString();
 
-            var modeCount = buffer.GetUInt16(ref offset);
-            dev.ActiveModeIndex = buffer.GetInt32(ref offset);
-            dev.Modes = Mode.Decode(buffer, ref offset, modeCount);
+                var modeCount = reader.ReadUInt16();
+                dev.ActiveModeIndex = reader.ReadInt32();
+                dev.Modes = Mode.Decode(reader, modeCount);
 
-            var zoneCount = buffer.GetUInt16(ref offset);
-            dev.Zones = Zone.Decode(buffer, ref offset, zoneCount);
+                var zoneCount = reader.ReadUInt16();
+                dev.Zones = Zone.Decode(reader, zoneCount);
 
-            var ledCount = buffer.GetUInt16(ref offset);
-            dev.Leds = Led.Decode(buffer, ref offset, ledCount);
+                var ledCount = reader.ReadUInt16();
+                dev.Leds = Led.Decode(reader, ledCount);
 
-            var colorCount = buffer.GetUInt16(ref offset);
-            dev.Colors = Color.Decode(buffer, ref offset, colorCount);
-
-            return dev;
+                var colorCount = reader.ReadUInt16();
+                dev.Colors = Color.Decode(reader, colorCount);
+                return dev;
+            }
         }
 
         /// <inheritdoc/>

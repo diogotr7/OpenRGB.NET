@@ -1,5 +1,6 @@
 ﻿using OpenRGB.NET.Enums;
 using OpenRGB.NET.Utils;
+using System.IO;
 
 namespace OpenRGB.NET.Models
 {
@@ -72,10 +73,9 @@ namespace OpenRGB.NET.Models
         /// Decodes a byte array into a Mode array.
         /// Increments the offset accordingly.
         /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
+        /// <param name="reader"></param>
         /// <param name="numModes"></param>
-        internal static Mode[] Decode(byte[] buffer, ref int offset, uint numModes)
+        internal static Mode[] Decode(BinaryReader reader, ushort numModes)
         {
             var modes = new Mode[numModes];
 
@@ -83,28 +83,28 @@ namespace OpenRGB.NET.Models
             {
                 modes[i] = new Mode();
 
-                modes[i].Name = buffer.GetString(ref offset);
+                modes[i].Name = reader.ReadLengthAndString();
 
-                modes[i].Value = buffer.GetInt32(ref offset);
+                modes[i].Value = reader.ReadInt32();
 
-                modes[i].Flags = (ModeFlags)buffer.GetUInt32(ref offset);
+                modes[i].Flags = (ModeFlags)reader.ReadUInt32();
 
-                var speedMin = buffer.GetUInt32(ref offset);
+                var speedMin = reader.ReadUInt32();
 
-                var speedMax = buffer.GetUInt32(ref offset);
+                var speedMax = reader.ReadUInt32();
 
-                var colorMin = buffer.GetUInt32(ref offset);
+                var colorMin = reader.ReadUInt32();
 
-                var colorMax = buffer.GetUInt32(ref offset);
+                var colorMax = reader.ReadUInt32();
 
-                var speed = buffer.GetUInt32(ref offset);
+                var speed = reader.ReadUInt32();
 
-                var direction = buffer.GetUInt32(ref offset);
+                var direction = reader.ReadUInt32();
 
-                modes[i].ColorMode = (ColorMode)buffer.GetUInt32(ref offset);
+                modes[i].ColorMode = (ColorMode)reader.ReadUInt32();
 
-                ushort colorCount = buffer.GetUInt16(ref offset);
-                modes[i].Colors = Color.Decode(buffer, ref offset, colorCount);
+                ushort colorCount = reader.ReadUInt16();
+                modes[i].Colors = Color.Decode(reader, colorCount);
 
                 if (modes[i].HasFlag(ModeFlags.HasSpeed))
                 {

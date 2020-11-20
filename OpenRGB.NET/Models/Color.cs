@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace OpenRGB.NET.Models
@@ -106,11 +107,10 @@ namespace OpenRGB.NET.Models
         /// Decodes a byte array into a color array.
         /// Increments the offset accordingly.
         /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
+        /// <param name="reader"></param>
         /// <param name="colorCount"></param>
         /// <returns>An array of Colors decoded from bytes</returns>
-        internal static Color[] Decode(byte[] buffer, ref int offset, ushort colorCount)
+        internal static Color[] Decode(BinaryReader reader, ushort colorCount)
         {
             var colors = new Color[colorCount];
 
@@ -118,12 +118,12 @@ namespace OpenRGB.NET.Models
             {
                 colors[i] = new Color
                 {
-                    R = buffer[offset],
-                    G = buffer[offset + 1],
-                    B = buffer[offset + 2]
-                    //Alpha = buffer[offset + 3]
+                    R = reader.ReadByte(),
+                    G = reader.ReadByte(),
+                    B = reader.ReadByte()
+                    //Alpha = reader.ReadByte()
                 };
-                offset += 4 * sizeof(byte);
+                var unusedAlpha = reader.ReadByte();
             }
             return colors;
         }

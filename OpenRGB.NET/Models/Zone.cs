@@ -1,5 +1,6 @@
 ﻿using OpenRGB.NET.Enums;
 using OpenRGB.NET.Utils;
+using System.IO;
 using System.Security;
 
 namespace OpenRGB.NET.Models
@@ -43,10 +44,9 @@ namespace OpenRGB.NET.Models
         /// Decodes a byte array into a Zone array.
         /// Increments the offset accordingly
         /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
+        /// <param name="reader"></param>
         /// <param name="zoneCount"></param>
-        internal static Zone[] Decode(byte[] buffer, ref int offset, ushort zoneCount)
+        internal static Zone[] Decode(BinaryReader reader, ushort zoneCount)
         {
             var zones = new Zone[zoneCount];
 
@@ -54,20 +54,20 @@ namespace OpenRGB.NET.Models
             {
                 zones[i] = new Zone();
 
-                zones[i].Name = buffer.GetString(ref offset);
+                zones[i].Name = reader.ReadLengthAndString();
 
-                zones[i].Type = (ZoneType)buffer.GetUInt32(ref offset);
+                zones[i].Type = (ZoneType)reader.ReadUInt32();
 
-                zones[i].LedsMin = buffer.GetUInt32(ref offset);
+                zones[i].LedsMin = reader.ReadUInt32();
 
-                zones[i].LedsMax = buffer.GetUInt32(ref offset);
+                zones[i].LedsMax = reader.ReadUInt32();
 
-                zones[i].LedCount = buffer.GetUInt32(ref offset);
+                zones[i].LedCount = reader.ReadUInt32();
 
-                var zoneMatrixLength = buffer.GetUInt16(ref offset);
+                var zoneMatrixLength = reader.ReadUInt16();
 
                 if (zoneMatrixLength > 0)
-                    zones[i].MatrixMap = MatrixMap.Decode(buffer, ref offset);
+                    zones[i].MatrixMap = MatrixMap.Decode(reader);
                 else
                     zones[i].MatrixMap = null;
             }

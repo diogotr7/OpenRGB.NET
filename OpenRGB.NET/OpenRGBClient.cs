@@ -13,7 +13,7 @@ namespace OpenRGB.NET
     /// <summary>
     /// Client for the OpenRGB SDK.
     /// </summary>
-    public class OpenRGBClient : IDisposable
+    public class OpenRGBClient : IDisposable, IOpenRGBClient
     {
         private readonly string _ip;
         private readonly int _port;
@@ -22,9 +22,7 @@ namespace OpenRGB.NET
         private readonly int _timeout;
         private bool disposed;
 
-        /// <summary>
-        /// Represents the connection status of the socket to the server
-        /// </summary>
+        /// <inheritdoc/>
         public bool Connected => _socket?.Connected ?? false;
 
         #region Basic init methods
@@ -48,10 +46,7 @@ namespace OpenRGB.NET
             if (autoconnect) Connect();
         }
 
-        /// <summary>
-        /// Connects manually to the server. Only needs to be called if the constructor was called
-        /// with autoconnect set to false.
-        /// </summary>
+        /// <inheritdoc/>
         public void Connect()
         {
             if (Connected)
@@ -139,7 +134,7 @@ namespace OpenRGB.NET
             while (total < size)
             {
                 var recv = _socket.Receive(dataBuffer, total, size - total, SocketFlags.None);
-                if(recv == 0)
+                if (recv == 0)
                 {
                     break;
                     //maybe should handle this differently?
@@ -152,21 +147,14 @@ namespace OpenRGB.NET
         #endregion
 
         #region Request Methods
-        /// <summary>
-        /// Requests the controller count from the server.
-        /// </summary>
-        /// <returns>The amount of controllers.</returns>
+        /// <inheritdoc/>
         public int GetControllerCount()
         {
             SendMessage(CommandId.RequestControllerCount);
             return (int)BitConverter.ToUInt32(ReadMessage(), 0);
         }
 
-        /// <summary>
-        /// Requests the data block for a given controller index.
-        /// </summary>
-        /// <param name="id">The index of the controller to request the data from.</param>
-        /// <returns>The Device containing the decoded data for the controller with the given id.</returns>
+        /// <inheritdoc/>
         public Device GetControllerData(int id)
         {
             if (id < 0)
@@ -176,10 +164,7 @@ namespace OpenRGB.NET
             return Device.Decode(ReadMessage());
         }
 
-        /// <summary>
-        /// Requests the data for all the controllers detected by the server.
-        /// </summary>
-        /// <returns>An array with the information for all the devices.</returns>
+        /// <inheritdoc/>
         public Device[] GetAllControllerData()
         {
             var count = GetControllerCount();
@@ -193,12 +178,7 @@ namespace OpenRGB.NET
         #endregion
 
         #region Update Methods
-        /// <summary>
-        /// Updates the LEDs for the give device.
-        /// Make sure the array has the correct number of LEDs.
-        /// </summary>
-        /// <param name="deviceId"></param>
-        /// <param name="colors"></param>
+        /// <inheritdoc/>
         public void UpdateLeds(int deviceId, Color[] colors)
         {
             if (colors is null)
@@ -227,13 +207,7 @@ namespace OpenRGB.NET
             SendMessage(CommandId.UpdateLeds, bytes, (uint)deviceId);
         }
 
-        /// <summary>
-        /// Updates the LEDs of a given device and zone.
-        /// Make sure the array has the correct number of LEDs for the zone.
-        /// </summary>
-        /// <param name="deviceId"></param>
-        /// <param name="zoneId"></param>
-        /// <param name="colors"></param>
+        /// <inheritdoc/>
         public void UpdateZone(int deviceId, int zoneId, Color[] colors)
         {
             if (colors is null)
@@ -267,21 +241,10 @@ namespace OpenRGB.NET
             SendMessage(CommandId.UpdateZoneLeds, bytes, (uint)deviceId);
         }
 
-        /// <summary>
-        /// Sets the mode of the specified device to "Custom".
-        /// </summary>
-        /// <param name="deviceId"></param>
+        /// <inheritdoc/>
         public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
 
-        /// <summary>
-        /// Sets the specified mode on the specified device.
-        /// Any optional parameters not set will be left as received from the server.
-        /// </summary>
-        /// <param name="deviceId"></param>
-        /// <param name="modeId"></param>
-        /// <param name="speed"></param>
-        /// <param name="direction"></param>
-        /// <param name="colors"></param>
+        /// <inheritdoc/>
         public void SetMode(int deviceId, int modeId,
             uint? speed = null,
             Direction? direction = null,

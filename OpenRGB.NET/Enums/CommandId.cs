@@ -16,6 +16,11 @@
         RequestControllerData = 1,
 
         /// <summary>
+        /// Request the latest supported SDK server protocol version.
+        /// </summary>
+        RequestProtocolVersion = 40,
+
+        /// <summary>
         /// Send the server the name of the client.
         /// </summary>
         SetClientName = 50,

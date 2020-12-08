@@ -105,7 +105,7 @@ namespace OpenRGB.NET.Test
             //This delay is needed due to a threading bug in OpenRGB
             //https://gitlab.com/CalcProgrammer1/OpenRGB/-/issues/376
             //https://gitlab.com/CalcProgrammer1/OpenRGB/-/issues/350
-            Thread.Sleep(150);
+            //Thread.Sleep(150);
             Stopwatch sw = Stopwatch.StartNew();
             var client = new OpenRGBClient(name: "OpenRGB.NET Test: UpdateZoneTypes");
             var controllerCount = client.GetControllerCount();
@@ -205,6 +205,18 @@ namespace OpenRGB.NET.Test
                     Assert.True(!string.IsNullOrWhiteSpace(controller.Name));
                 }
             }
+        }
+
+        [Fact]
+        public void Version()
+        {
+            using OpenRGBClient versionZero = new OpenRGBClient(protocolVersion: 0);
+            var devicesZero = versionZero.GetAllControllerData();
+            Assert.All(devicesZero, d => Assert.Null(d.Vendor));
+
+            using OpenRGBClient versionOne = new OpenRGBClient(protocolVersion: 1);
+            var devicesOne = versionOne.GetAllControllerData();
+            Assert.All(devicesOne, d => Assert.NotNull(d.Vendor));
         }
     }
 }

@@ -20,6 +20,11 @@ namespace OpenRGB.NET.Models
         public string Name { get; private set; }
 
         /// <summary>
+        /// The vendor of the device. Will be null on protocol versions below 1.
+        /// </summary>
+        public string Vendor { get; private set; }
+
+        /// <summary>
         /// The description of device.
         /// </summary>
         public string Description { get; private set; }
@@ -73,7 +78,8 @@ namespace OpenRGB.NET.Models
         /// Decodes a byte array into a Device.
         /// </summary>
         /// <param name="buffer"></param>
-        internal static Device Decode(byte[] buffer)
+        /// <param name="protocol"></param>
+        internal static Device Decode(byte[] buffer, uint protocol)
         {
             var dev = new Device();
             using (var reader = new BinaryReader(new MemoryStream(buffer)))
@@ -83,6 +89,15 @@ namespace OpenRGB.NET.Models
                 dev.Type = (DeviceType)reader.ReadInt32();
 
                 dev.Name = reader.ReadLengthAndString();
+
+                if (protocol >= 1)
+                {
+                    dev.Vendor = reader.ReadLengthAndString();
+                }
+                else
+                {
+                    dev.Vendor = null;
+                }
 
                 dev.Description = reader.ReadLengthAndString();
 

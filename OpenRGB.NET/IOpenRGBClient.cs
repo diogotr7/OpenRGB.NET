@@ -14,6 +14,21 @@ namespace OpenRGB.NET
         bool Connected { get; }
 
         /// <summary>
+        /// The maximum protocol version this implementation supports
+        /// </summary>
+        uint MaxSupportedProtocolVersion { get; }
+
+        /// <summary>
+        /// The protocol version to be used by this instance of <see cref="IOpenRGBClient"/>
+        /// </summary>
+        uint ClientProtocolVersion { get; }
+
+        /// <summary>
+        /// The minimum common protocol version between this client and the connected server. Only set after the first <see cref="Connect"/>
+        /// </summary>
+        uint ProtocolVersion { get; }
+
+        /// <summary>
         /// Connects manually to the server. Only needs to be called if the constructor was called
         /// with autoconnect set to false.
         /// </summary>

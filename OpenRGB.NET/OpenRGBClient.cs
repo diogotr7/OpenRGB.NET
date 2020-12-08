@@ -1,4 +1,4 @@
-﻿using OpenRGB.NET.Enums;
+using OpenRGB.NET.Enums;
 using OpenRGB.NET.Models;
 using OpenRGB.NET.Utils;
 using System;
@@ -25,6 +25,15 @@ namespace OpenRGB.NET
         /// <inheritdoc/>
         public bool Connected => _socket?.Connected ?? false;
 
+        /// <inheritdoc/>
+        public uint MaxSupportedProtocolVersion => 1;
+
+        /// <inheritdoc/>
+        public uint ClientProtocolVersion { get; private set; }
+
+        /// <inheritdoc/>
+        public uint ProtocolVersion { get; private set; }
+
         #region Basic init methods
         /// <summary>
         /// Sets all the needed parameters to connect to the server.
@@ -35,13 +44,18 @@ namespace OpenRGB.NET
         /// <param name="name"></param>
         /// <param name="autoconnect"></param>
         /// <param name="timeout"></param>
-        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000)
+        /// <param name="protocolVersion"></param>
+        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000, uint protocolVersion = 1)
         {
             _ip = ip;
             _port = port;
             _name = name;
             _timeout = timeout;
             _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+            if (protocolVersion > MaxSupportedProtocolVersion)
+                throw new ArgumentException(nameof(protocolVersion));
+            ClientProtocolVersion = protocolVersion;
 
             if (autoconnect) Connect();
         }
@@ -71,6 +85,8 @@ namespace OpenRGB.NET
                 CommandId.SetClientName,
                 Encoding.ASCII.GetBytes(_name + '\0')
             );
+
+            ProtocolVersion = Math.Min(ClientProtocolVersion, GetServerProtocolVersion());
         }
         #endregion
 
@@ -160,8 +176,8 @@ namespace OpenRGB.NET
             if (id < 0)
                 throw new ArgumentException(nameof(id));
 
-            SendMessage(CommandId.RequestControllerData, null, (uint)id);
-            return Device.Decode(ReadMessage());
+            SendMessage(CommandId.RequestControllerData, BitConverter.GetBytes(ProtocolVersion), (uint)id);
+            return Device.Decode(ReadMessage(), ProtocolVersion);
         }
 
         /// <inheritdoc/>
@@ -174,6 +190,24 @@ namespace OpenRGB.NET
                 array[i] = GetControllerData(i);
 
             return array;
+        }
+
+        private uint GetServerProtocolVersion()
+        {
+            SendMessage(CommandId.RequestProtocolVersion, BitConverter.GetBytes(ClientProtocolVersion));
+            uint serverVersion;
+            _socket.ReceiveTimeout = 1000;
+            try
+            {
+                serverVersion =  BitConverter.ToUInt32(ReadMessage(), 0);
+            }
+            catch (SocketException e) when (e.SocketErrorCode == SocketError.TimedOut)
+            {
+                serverVersion = 0;
+            }
+            _socket.ReceiveTimeout = 0;
+
+            return serverVersion;
         }
         #endregion
 

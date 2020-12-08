@@ -192,6 +192,18 @@ namespace OpenRGB.NET
             return array;
         }
 
+
+        /// <inheritdoc/>
+        public IEnumerable<Device> EnumerateControllerData()
+        {
+            var count = GetControllerCount();
+
+            for (var i = 0; i < count; i++)
+            {
+                yield return GetControllerData(i);
+            }
+        }
+
         private uint GetServerProtocolVersion()
         {
             SendMessage(CommandId.RequestProtocolVersion, BitConverter.GetBytes(ClientProtocolVersion));
@@ -199,7 +211,7 @@ namespace OpenRGB.NET
             _socket.ReceiveTimeout = 1000;
             try
             {
-                serverVersion =  BitConverter.ToUInt32(ReadMessage(), 0);
+                serverVersion = BitConverter.ToUInt32(ReadMessage(), 0);
             }
             catch (SocketException e) when (e.SocketErrorCode == SocketError.TimedOut)
             {

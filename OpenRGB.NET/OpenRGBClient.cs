@@ -2,6 +2,7 @@ using OpenRGB.NET.Enums;
 using OpenRGB.NET.Models;
 using OpenRGB.NET.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -121,8 +122,6 @@ namespace OpenRGB.NET
 
             if (result != packetSize)
                 throw new Exception("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
-
-            return;
         }
 
         /// <summary>
@@ -190,6 +189,30 @@ namespace OpenRGB.NET
                 array[i] = GetControllerData(i);
 
             return array;
+        }
+
+        /// <inheritdoc/>
+        public string[] GetProfiles()
+        {
+            SendMessage(CommandId.RequestProfiles, BitConverter.GetBytes(ProtocolVersion));
+            var buffer = ReadMessage();
+
+            using (var reader = new BinaryReader(new MemoryStream(buffer)))
+            {
+                // skip unused
+                reader.ReadUInt32();
+
+                var count = reader.ReadUInt16();
+                var profiles = new string[count];
+
+                for (int i = 0; i < count; i++)
+                {
+                    var nameLength = reader.ReadUInt16();
+                    profiles[i] = Encoding.ASCII.GetString(reader.ReadBytes(nameLength));
+                }
+
+                return profiles;
+            }
         }
 
         private uint GetServerProtocolVersion()
@@ -277,6 +300,11 @@ namespace OpenRGB.NET
 
         /// <inheritdoc/>
         public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
+
+        /// <inheritdoc/>
+        public void LoadProfile(string profile) {
+            SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        }
 
         /// <inheritdoc/>
         public void SetMode(int deviceId, int modeId,

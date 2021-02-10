@@ -183,6 +183,15 @@ namespace OpenRGB.NET.Test
         }
 
         [Fact]
+        public void LoadRandomProfile()
+        {
+            OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: LoadRandomProfile");
+            var profiles = client.GetProfiles();
+            var loadMe = profiles[new Random().Next(0, profiles.Length)];
+            client.LoadProfile(loadMe);
+        }
+
+        [Fact]
         public void UseAfterDispose()
         {
             Stopwatch sw = Stopwatch.StartNew();

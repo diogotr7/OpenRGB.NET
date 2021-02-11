@@ -199,16 +199,12 @@ namespace OpenRGB.NET
 
             using (var reader = new BinaryReader(new MemoryStream(buffer)))
             {
-                // skip unused
-                reader.ReadUInt32();
-
+                var dataSize = reader.ReadUInt32();
                 var count = reader.ReadUInt16();
                 var profiles = new string[count];
 
                 for (int i = 0; i < count; i++)
-                {
                     profiles[i] = reader.ReadLengthAndString();
-                }
 
                 return profiles;
             }
@@ -301,9 +297,7 @@ namespace OpenRGB.NET
         public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
 
         /// <inheritdoc/>
-        public void LoadProfile(string profile) {
-            SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
-        }
+        public void LoadProfile(string profile) => SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
 
         /// <inheritdoc/>
         public void SetMode(int deviceId, int modeId,

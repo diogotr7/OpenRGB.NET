@@ -26,6 +26,16 @@
         SetClientName = 50,
 
         /// <summary>
+        /// Request list of profiles from the server
+        /// </summary>
+        RequestProfiles = 150,
+
+        /// <summary>
+        /// Load a given profile
+        /// </summary>
+        LoadProfile = 152,
+
+        /// <summary>
         /// Calls RGBController::ResizeZone() on the server. Not implemented.
         /// </summary>
         ResizeZone = 1000,

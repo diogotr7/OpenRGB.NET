@@ -54,6 +54,18 @@ namespace OpenRGB.NET
         Device GetControllerData(int id);
 
         /// <summary>
+        /// Requests existing profiles on the server
+        /// </summary>
+        /// <returns>An array with profile names</returns>
+        string[] GetProfiles();
+
+        /// <summary>
+        /// Loads the provided profile on the server
+        /// </summary>
+        /// <param name="profile">Name of the profile to load</param>
+        void LoadProfile(string profile);
+
+        /// <summary>
         /// Sets the mode of the specified device to "Custom".
         /// </summary>
         /// <param name="deviceId"></param>

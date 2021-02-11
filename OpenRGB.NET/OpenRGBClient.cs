@@ -191,6 +191,17 @@ namespace OpenRGB.NET
             return array;
         }
 
+        /// <summary>
+        /// Enumerates all controllers instead of returning an array containing all of them.
+        /// </summary>
+        public IEnumerable<Device> EnumerateControllerData()
+        {
+            var count = GetControllerCount();
+
+            for (int i = 0; i < count; i++)
+                yield return GetControllerData(i);
+        }
+
         /// <inheritdoc/>
         public string[] GetProfiles()
         {

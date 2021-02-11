@@ -207,8 +207,7 @@ namespace OpenRGB.NET
 
                 for (int i = 0; i < count; i++)
                 {
-                    var nameLength = reader.ReadUInt16();
-                    profiles[i] = Encoding.ASCII.GetString(reader.ReadBytes(nameLength));
+                    profiles[i] = reader.ReadLengthAndString();
                 }
 
                 return profiles;

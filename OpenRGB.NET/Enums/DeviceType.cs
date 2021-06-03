@@ -17,6 +17,8 @@
         HeadsetStand,
         Gamepad,
         Light,
+        Speaker,
+        Virtual,
         Unknown
     }
 }

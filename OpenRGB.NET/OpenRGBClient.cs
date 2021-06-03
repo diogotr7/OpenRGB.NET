@@ -27,7 +27,7 @@ namespace OpenRGB.NET
         public bool Connected => _socket?.Connected ?? false;
 
         /// <inheritdoc/>
-        public uint MaxSupportedProtocolVersion => 1;
+        public uint MaxSupportedProtocolVersion => 2;
 
         /// <inheritdoc/>
         public uint ClientProtocolVersion { get; private set; }
@@ -46,7 +46,7 @@ namespace OpenRGB.NET
         /// <param name="autoconnect"></param>
         /// <param name="timeout"></param>
         /// <param name="protocolVersion"></param>
-        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000, uint protocolVersion = 1)
+        public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000, uint protocolVersion = 2)
         {
             _ip = ip;
             _port = port;
@@ -205,6 +205,9 @@ namespace OpenRGB.NET
         /// <inheritdoc/>
         public string[] GetProfiles()
         {
+            if (ClientProtocolVersion < 2)
+                throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
+
             SendMessage(CommandId.RequestProfiles, BitConverter.GetBytes(ProtocolVersion));
             var buffer = ReadMessage();
 
@@ -308,7 +311,31 @@ namespace OpenRGB.NET
         public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
 
         /// <inheritdoc/>
-        public void LoadProfile(string profile) => SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        public void LoadProfile(string profile)
+        {
+            if (ClientProtocolVersion < 2)
+                throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
+
+            SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        }
+
+        /// <inheritdoc/>
+        public void SaveProfile(string profile)
+        {
+            if (ClientProtocolVersion < 2)
+                throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
+
+            SendMessage(CommandId.SaveProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        }
+
+        /// <inheritdoc/>
+        public void DeleteProfile(string profile)
+        {
+            if (ClientProtocolVersion < 2)
+                throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
+
+            SendMessage(CommandId.DeleteProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        }
 
         /// <inheritdoc/>
         public void SetMode(int deviceId, int modeId,

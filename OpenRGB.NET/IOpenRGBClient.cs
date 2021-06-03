@@ -66,6 +66,18 @@ namespace OpenRGB.NET
         void LoadProfile(string profile);
 
         /// <summary>
+        /// Deletes the provided profile on the server
+        /// </summary>
+        /// <param name="profile"> Name of the profile to delete</param>
+        void DeleteProfile(string profile);
+
+        /// <summary>
+        /// Saves the current state as a profile with the provided name
+        /// </summary>
+        /// <param name="profile"> Name of the profile to save</param>
+        void SaveProfile(string profile);
+
+        /// <summary>
         /// Sets the mode of the specified device to "Custom".
         /// </summary>
         /// <param name="deviceId"></param>

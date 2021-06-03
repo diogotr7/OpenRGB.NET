@@ -1,5 +1,6 @@
 ﻿using OpenRGB.NET.Enums;
 using OpenRGB.NET.Utils;
+using System;
 using System.IO;
 
 namespace OpenRGB.NET.Models
@@ -86,7 +87,15 @@ namespace OpenRGB.NET.Models
             {
                 var duplicatePacketLength = reader.ReadUInt32();
 
-                dev.Type = (DeviceType)reader.ReadInt32();
+                var deviceType = reader.ReadInt32();
+                if (Enum.IsDefined(typeof(DeviceType), deviceType))
+                {
+                    dev.Type = (DeviceType)deviceType;
+                }
+                else
+                {
+                    dev.Type = DeviceType.Unknown;
+                }
 
                 dev.Name = reader.ReadLengthAndString();
 

@@ -187,6 +187,11 @@ namespace OpenRGB.NET.Test
         {
             using OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: LoadRandomProfile");
             var profiles = client.GetProfiles();
+            if (profiles.Length == 0)
+            {
+                client.SaveProfile("TestProfile");
+                profiles = client.GetProfiles();
+            }
             var loadMe = profiles[new Random().Next(0, profiles.Length)];
             client.LoadProfile(loadMe);
         }
@@ -217,7 +222,7 @@ namespace OpenRGB.NET.Test
         }
 
         [Fact]
-        public void Version()
+        public void TestProtocolVersionOne()
         {
             using OpenRGBClient versionZero = new OpenRGBClient(protocolVersion: 0);
             var devicesZero = versionZero.GetAllControllerData();
@@ -226,6 +231,17 @@ namespace OpenRGB.NET.Test
             using OpenRGBClient versionOne = new OpenRGBClient(protocolVersion: 1);
             var devicesOne = versionOne.GetAllControllerData();
             Assert.All(devicesOne, d => Assert.NotNull(d.Vendor));
+        }
+
+        [Fact]
+        public void TestProtocolVersionTwo()
+        {
+            using OpenRGBClient versionOne = new OpenRGBClient(protocolVersion: 1);
+            Assert.Throws<NotSupportedException>(() => versionOne.GetProfiles());
+
+            using OpenRGBClient versionTwo = new OpenRGBClient(protocolVersion: 2);
+            var exception = Record.Exception(() => versionTwo.GetProfiles());
+            Assert.Null(exception);
         }
     }
 }

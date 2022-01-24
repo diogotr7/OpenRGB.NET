@@ -11,6 +11,16 @@ namespace OpenRGB.NET.Models
     public class Zone
     {
         /// <summary>
+        /// The ID of the zone.
+        /// </summary>
+        public int ID { get; private set; }
+
+        /// <summary>
+        /// The ID of the zone's device
+        /// </summary>
+        public int DeviceID { get; private set; }
+
+        /// <summary>
         /// The name of the zone.
         /// </summary>
         public string Name { get; private set; }
@@ -46,13 +56,19 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="zoneCount"></param>
-        internal static Zone[] Decode(BinaryReader reader, ushort zoneCount)
+        /// <param name="deviceID"></param>
+        /// <param name="zoneID"></param>
+        internal static Zone[] Decode(BinaryReader reader, ushort zoneCount, int deviceID)
         {
             var zones = new Zone[zoneCount];
 
             for (int i = 0; i < zoneCount; i++)
             {
                 zones[i] = new Zone();
+
+                zones[i].DeviceID = deviceID;
+
+                zones[i].ID = i;
 
                 zones[i].Name = reader.ReadLengthAndString();
 

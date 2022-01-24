@@ -413,8 +413,15 @@ namespace OpenRGB.NET
                     // Managed object only
                     if (_socket != null && _socket.Connected)
                     {
-                        _socket?.Disconnect(false);
-                        _socket?.Dispose();
+                        try
+                        {
+                            _socket?.Shutdown(SocketShutdown.Both);
+                            _socket?.Dispose();
+                        }
+                        catch
+                        {
+                            //Don't throw in Dispose
+                        }
                     }
                     disposed = true;
                 }

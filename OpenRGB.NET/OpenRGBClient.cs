@@ -415,12 +415,12 @@ namespace OpenRGB.NET
                     {
                         try
                         {
-                            socket?.Shutdown(SocketShutdown.Both);
-                        }
-                        finally
-                        {
-                            _socket?.Disconnect(false);
+                            _socket?.Shutdown(SocketShutdown.Both);
                             _socket?.Dispose();
+                        }
+                        catch
+                        {
+                            //Don't throw in Dispose
                         }
                     }
                     disposed = true;

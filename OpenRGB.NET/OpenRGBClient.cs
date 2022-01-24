@@ -30,7 +30,7 @@ namespace OpenRGB.NET
         public uint MaxSupportedProtocolVersion => 2;
 
         /// <inheritdoc/>
-        public uint ClientProtocolVersion { get; private set; }
+        public uint ClientProtocolVersion { get; }
 
         /// <inheritdoc/>
         public uint ProtocolVersion { get; private set; }
@@ -55,7 +55,9 @@ namespace OpenRGB.NET
             _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
             if (protocolVersion > MaxSupportedProtocolVersion)
-                throw new ArgumentException(nameof(protocolVersion));
+                throw new ArgumentException("Client protocol version provided higher than supported.", nameof(protocolVersion));
+
+            ProtocolVersion = uint.MaxValue;
             ClientProtocolVersion = protocolVersion;
 
             if (autoconnect) Connect();
@@ -109,7 +111,7 @@ namespace OpenRGB.NET
             );
 
             if (result != PacketHeader.Size)
-                throw new Exception("Sent incorrect number of bytes when sending header in " + nameof(SendMessage));
+                throw new IOException("Sent incorrect number of bytes when sending header in " + nameof(SendMessage));
 
             if (packetSize <= 0)
                 return;
@@ -117,7 +119,7 @@ namespace OpenRGB.NET
             result = _socket.SendFull(buffer);
 
             if (result != packetSize)
-                throw new Exception("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
+                throw new IOException("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
         }
 
         /// <summary>
@@ -133,14 +135,14 @@ namespace OpenRGB.NET
             //and decode it into a header to know how many bytes we will receive next
             var header = PacketHeader.Decode(headerBuffer);
             if (header.DataLength <= 0)
-                throw new Exception("Length of header was zero");
+                throw new IOException("Length of header was zero");
 
             //we then make a buffer that will receive the data
             var dataBuffer = new byte[header.DataLength];
             var received = _socket.ReceiveFull(dataBuffer);
 
             if (received < dataBuffer.Length)
-                throw new Exception($"Received {received} bytes, expected {dataBuffer.Length}.");
+                throw new IOException($"Received {received} bytes, expected {dataBuffer.Length}.");
 
             return dataBuffer;
         }

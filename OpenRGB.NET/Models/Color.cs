@@ -142,6 +142,14 @@ namespace OpenRGB.NET.Models
             };
         }
 
+        internal void CopyTo(byte[] array, int index)
+        {
+            array[index + 0] = R;
+            array[index + 1] = G;
+            array[index + 2] = B;
+            array[index + 3] = 0;
+        }
+
         /// <summary>
         /// Generates a smooth rainbow with the given amount of colors.
         /// Uses HSV conversion to get a hue-based rainbow.

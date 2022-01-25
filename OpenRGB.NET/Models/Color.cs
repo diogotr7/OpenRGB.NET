@@ -38,9 +38,9 @@ namespace OpenRGB.NET.Models
         /// <summary>
         /// Method used to create a color from HSV values.
         /// </summary>
-        /// <param name="hue">Hue ranges from 0 to 360, input range wraps automatically</param>
-        /// <param name="saturation">0.0 to 1.0</param>
-        /// <param name="value">0.0 to 1.0</param>
+        /// <param name="hue">Hue ranges from 0 to 360, input range wraps automatically.</param>
+        /// <param name="saturation">Ranges from 0.0 to 1.0.</param>
+        /// <param name="value">Ranges from 0.0 to 1.0.</param>
         /// <returns>The color converted to RGB.</returns>
         public static Color FromHsv(double hue, double saturation, double value)
         {

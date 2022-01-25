@@ -11,6 +11,11 @@ namespace OpenRGB.NET.Models
     public class Device
     {
         /// <summary>
+        /// The ID of the device.
+        /// </summary>
+        public int ID { get; private set; }
+
+        /// <summary>
         /// The type of the device.
         /// </summary>
         public DeviceType Type { get; private set; }
@@ -80,9 +85,12 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="protocol"></param>
-        internal static Device Decode(byte[] buffer, uint protocol)
+        /// <param name="deviceId"></param>
+        internal static Device Decode(byte[] buffer, uint protocol, int deviceId)
         {
             var dev = new Device();
+            dev.ID = deviceId;
+
             using (var reader = new BinaryReader(new MemoryStream(buffer)))
             {
                 var duplicatePacketLength = reader.ReadUInt32();
@@ -121,7 +129,7 @@ namespace OpenRGB.NET.Models
                 dev.Modes = Mode.Decode(reader, modeCount);
 
                 var zoneCount = reader.ReadUInt16();
-                dev.Zones = Zone.Decode(reader, zoneCount);
+                dev.Zones = Zone.Decode(reader, zoneCount, deviceId);
 
                 var ledCount = reader.ReadUInt16();
                 dev.Leds = Led.Decode(reader, ledCount);

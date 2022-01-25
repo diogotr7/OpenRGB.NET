@@ -176,7 +176,7 @@ namespace OpenRGB.NET
                 throw new ArgumentException(nameof(id));
 
             SendMessage(CommandId.RequestControllerData, BitConverter.GetBytes(ProtocolVersion), (uint)id);
-            return Device.Decode(ReadMessage(), ProtocolVersion);
+            return Device.Decode(ReadMessage(), ProtocolVersion, id);
         }
 
         /// <inheritdoc/>

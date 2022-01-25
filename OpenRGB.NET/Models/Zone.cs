@@ -56,8 +56,7 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="zoneCount"></param>
-        /// <param name="deviceID"></param>
-        /// <param name="zoneID"></param>
+        /// <param name="deviceID">ID of owning device</param>
         internal static Zone[] Decode(BinaryReader reader, ushort zoneCount, int deviceID)
         {
             var zones = new Zone[zoneCount];

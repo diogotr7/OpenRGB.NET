@@ -26,7 +26,7 @@ namespace OpenRGB.NET.Models
         public byte B { get; set; }
 
         /// <summary>
-        /// Constructs a new color with the specified red, gree, and blue values.
+        /// Constructs a new color with the specified red, green, and blue values.
         /// </summary>
         public Color(byte red = 0, byte green = 0, byte blue = 0)
         {
@@ -38,10 +38,10 @@ namespace OpenRGB.NET.Models
         /// <summary>
         /// Method used to create a color from HSV values.
         /// </summary>
-        /// <param name="hue"></param>
-        /// <param name="saturation"></param>
-        /// <param name="value"></param>
-        /// <returns>The color converted to RGB</returns>
+        /// <param name="hue">Hue ranges from 0 to 360, input range wraps automatically</param>
+        /// <param name="saturation">0.0 to 1.0</param>
+        /// <param name="value">0.0 to 1.0</param>
+        /// <returns>The color converted to RGB.</returns>
         public static Color FromHsv(double hue, double saturation, double value)
         {
             if (saturation < 0 || saturation > 1)
@@ -78,7 +78,7 @@ namespace OpenRGB.NET.Models
         /// <summary>
         /// Converts a color to HSV.
         /// </summary>
-        /// <returns>Tuple with the HSV values</returns>
+        /// <returns>Tuple with the HSV values.</returns>
         public (double h, double s, double v) ToHsv()
         {
             var max = Math.Max(R, Math.Max(G, B));
@@ -109,7 +109,7 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="colorCount"></param>
-        /// <returns>An array of Colors decoded from bytes</returns>
+        /// <returns>An array of Colors decoded from bytes.</returns>
         internal static Color[] Decode(BinaryReader reader, ushort colorCount)
         {
             var colors = new Color[colorCount];
@@ -147,10 +147,10 @@ namespace OpenRGB.NET.Models
         /// Uses HSV conversion to get a hue-based rainbow.
         /// </summary>
         /// <param name="amount">How many colors to generate.</param>
-        /// <param name="hueStart">The hue of the first color</param>
-        /// <param name="huePercent">How much of the hue scale to use.</param>
-        /// <param name="saturation">The HSV saturation of the colors</param>
-        /// <param name="value">The HSV value of the colors.</param>
+        /// <param name="hueStart">The hue of the first color, 0 to 360.</param>
+        /// <param name="huePercent">How much of the hue scale to use. 1.0 represents the full range.</param>
+        /// <param name="saturation">The HSV saturation of the colors, 0.0 to 1.0.</param>
+        /// <param name="value">The HSV value of the colors, 0.0 to 1.0.</param>
         /// <returns>An collection of Colors in a rainbow pattern.</returns>
         public static IEnumerable<Color> GetHueRainbow(int amount, double hueStart = 0, double huePercent = 1.0,
                                                                 double saturation = 1.0, double value = 1.0) =>

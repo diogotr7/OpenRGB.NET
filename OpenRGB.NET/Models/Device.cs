@@ -11,6 +11,11 @@ namespace OpenRGB.NET.Models
     public class Device
     {
         /// <summary>
+        /// The owning OpenRGBClient of the device.
+        /// </summary>
+        public IOpenRGBClient Client { get; private set; }
+
+        /// <summary>
         /// The ID of the device.
         /// </summary>
         public int ID { get; private set; }
@@ -85,11 +90,15 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="protocol"></param>
-        /// <param name="deviceId"></param>
-        internal static Device Decode(byte[] buffer, uint protocol, int deviceId)
+        /// <param name="client">The owning OpenRGBClient for this device.</param>
+        /// <param name="deviceId">The device ID under the owning client.</param>
+        internal static Device Decode(byte[] buffer, uint protocol, IOpenRGBClient client, int deviceId)
         {
-            var dev = new Device();
-            dev.ID = deviceId;
+            var dev = new Device
+            {
+                ID = deviceId,
+                Client = client
+            };
 
             using (var reader = new BinaryReader(new MemoryStream(buffer)))
             {
@@ -129,7 +138,7 @@ namespace OpenRGB.NET.Models
                 dev.Modes = Mode.Decode(reader, modeCount);
 
                 var zoneCount = reader.ReadUInt16();
-                dev.Zones = Zone.Decode(reader, zoneCount, deviceId);
+                dev.Zones = Zone.Decode(reader, zoneCount, client, deviceId);
 
                 var ledCount = reader.ReadUInt16();
                 dev.Leds = Led.Decode(reader, ledCount);
@@ -139,6 +148,11 @@ namespace OpenRGB.NET.Models
                 return dev;
             }
         }
+
+        /// <summary>
+        /// Calls UpdateLeds(ID, colors) on the owning client.
+        /// </summary>
+        public void Update(Color[] colors) => Client.UpdateLeds(ID, colors);
 
         /// <inheritdoc/>
         public override string ToString() => $"{Type}: {Name}";

@@ -11,6 +11,11 @@ namespace OpenRGB.NET.Models
     public class Zone
     {
         /// <summary>
+        /// The owning OpenRGBClient of the device.
+        /// </summary>
+        public IOpenRGBClient Client { get; private set; }
+
+        /// <summary>
         /// The ID of the zone.
         /// </summary>
         public int ID { get; private set; }
@@ -56,28 +61,25 @@ namespace OpenRGB.NET.Models
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="zoneCount"></param>
-        /// <param name="deviceID">ID of owning device</param>
-        internal static Zone[] Decode(BinaryReader reader, ushort zoneCount, int deviceID)
+        /// <param name="deviceID"></param>
+        /// <param name="zoneID"></param>
+        internal static Zone[] Decode(BinaryReader reader, ushort zoneCount, IOpenRGBClient client, int deviceID)
         {
             var zones = new Zone[zoneCount];
 
             for (int i = 0; i < zoneCount; i++)
             {
-                zones[i] = new Zone();
-
-                zones[i].DeviceID = deviceID;
-
-                zones[i].ID = i;
-
-                zones[i].Name = reader.ReadLengthAndString();
-
-                zones[i].Type = (ZoneType)reader.ReadUInt32();
-
-                zones[i].LedsMin = reader.ReadUInt32();
-
-                zones[i].LedsMax = reader.ReadUInt32();
-
-                zones[i].LedCount = reader.ReadUInt32();
+                zones[i] = new Zone
+                {
+                    Client = client,
+                    DeviceID = deviceID,
+                    ID = i,
+                    Name = reader.ReadLengthAndString(),
+                    Type = (ZoneType)reader.ReadUInt32(),
+                    LedsMin = reader.ReadUInt32(),
+                    LedsMax = reader.ReadUInt32(),
+                    LedCount = reader.ReadUInt32()
+                };
 
                 var zoneMatrixLength = reader.ReadUInt16();
 
@@ -89,5 +91,10 @@ namespace OpenRGB.NET.Models
 
             return zones;
         }
+
+        /// <summary>
+        /// Calls UpdateZone(DeviceID, ID, colors) on the corresponding client.
+        /// </summary>
+        public void Update(Color[] colors) => Client.UpdateZone(DeviceID, ID, colors);
     }
 }

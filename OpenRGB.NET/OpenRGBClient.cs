@@ -2,10 +2,8 @@ using OpenRGB.NET.Enums;
 using OpenRGB.NET.Models;
 using OpenRGB.NET.Utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 
@@ -21,19 +19,25 @@ namespace OpenRGB.NET
         private readonly string _name;
         private readonly Socket _socket;
         private readonly int _timeout;
-        private bool disposed;
+        private readonly BlockingResponseMap _blockingResponseMap;
+        private bool _disposed;
+        private readonly byte [] _buffer = new byte[PacketHeader.Size];
 
         /// <inheritdoc/>
         public bool Connected => _socket?.Connected ?? false;
 
         /// <inheritdoc/>
-        public uint MaxSupportedProtocolVersion => 2;
+        public uint MaxSupportedProtocolVersion => 3;
 
         /// <inheritdoc/>
         public uint ClientProtocolVersion { get; }
 
         /// <inheritdoc/>
         public uint ProtocolVersion { get; private set; }
+
+        /// <inheritdoc/>
+        // ReSharper disable once EventNeverSubscribedTo.Global
+        public event EventHandler<EventArgs> DeviceListUpdated;
 
 #region Basic init methods
         /// <summary>
@@ -48,6 +52,7 @@ namespace OpenRGB.NET
         /// <param name="protocolVersion"></param>
         public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000, uint protocolVersion = 2)
         {
+            _blockingResponseMap = new BlockingResponseMap(timeout);
             _ip = ip;
             _port = port;
             _name = name;
@@ -76,6 +81,7 @@ namespace OpenRGB.NET
             if (_socket.Connected)
             {
                 _socket.EndConnect(result);
+                _socket.BeginReceive(_buffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
             }
             else
             {
@@ -91,6 +97,7 @@ namespace OpenRGB.NET
 
             ProtocolVersion = Math.Min(ClientProtocolVersion, GetServerProtocolVersion());
         }
+
 #endregion
 
 #region Basic Comms methods
@@ -122,29 +129,36 @@ namespace OpenRGB.NET
                 throw new IOException("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
         }
 
-        /// <summary>
-        /// Reads data from the server. Receives the header packet first to know how many bytes to read.
-        /// </summary>
-        /// <returns>the data received from the server</returns>
-        private byte[] ReadMessage()
+        private void OnReceive(IAsyncResult ar)
         {
+            if (_socket is not {Connected: true})
+            {
+                return;
+            }
+            _socket.EndReceive(ar);
+
             //we need a byte buffer to store the header
             var headerBuffer = new byte[PacketHeader.Size];
-            //then we read into that buffer
-            _socket.Receive(headerBuffer, PacketHeader.Size, SocketFlags.None);
+            Buffer.BlockCopy(_buffer, 0, headerBuffer, 0, PacketHeader.Size);
             //and decode it into a header to know how many bytes we will receive next
             var header = PacketHeader.Decode(headerBuffer);
-            if (header.DataLength <= 0)
-                throw new IOException("Length of header was zero");
 
-            //we then make a buffer that will receive the data
-            var dataBuffer = new byte[header.DataLength];
-            var received = _socket.ReceiveFull(dataBuffer);
+            if (header.Command == (uint)CommandId.DeviceListUpdated)
+            {
+                //notify users to update device list
+                DeviceListUpdated?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                //we then make a buffer that will receive the data
+                var dataBuffer = new byte[header.DataLength];
+                _socket.ReceiveFull(dataBuffer);
 
-            if (received < dataBuffer.Length)
-                throw new IOException($"Received {received} bytes, expected {dataBuffer.Length}.");
+                //sort the response types on response map
+                _blockingResponseMap[header.Command] = dataBuffer;
+            }
 
-            return dataBuffer;
+            _socket.BeginReceive(_buffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
         }
 #endregion
 
@@ -153,7 +167,7 @@ namespace OpenRGB.NET
         public int GetControllerCount()
         {
             SendMessage(CommandId.RequestControllerCount);
-            return (int)BitConverter.ToUInt32(ReadMessage(), 0);
+            return (int)BitConverter.ToUInt32(_blockingResponseMap[CommandId.RequestControllerCount], 0);
         }
 
         /// <inheritdoc/>
@@ -163,7 +177,7 @@ namespace OpenRGB.NET
                 throw new ArgumentException(nameof(id));
 
             SendMessage(CommandId.RequestControllerData, BitConverter.GetBytes(ProtocolVersion), (uint)id);
-            return Device.Decode(ReadMessage(), ProtocolVersion, this, id);
+            return Device.Decode(_blockingResponseMap[CommandId.RequestControllerData], ProtocolVersion, this, id);
         }
 
         /// <inheritdoc/>
@@ -196,7 +210,7 @@ namespace OpenRGB.NET
                 throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
 
             SendMessage(CommandId.RequestProfiles, BitConverter.GetBytes(ProtocolVersion));
-            var buffer = ReadMessage();
+            var buffer = _blockingResponseMap[CommandId.RequestProfiles];
 
             using (var reader = new BinaryReader(new MemoryStream(buffer)))
             {
@@ -218,7 +232,7 @@ namespace OpenRGB.NET
             _socket.ReceiveTimeout = 1000;
             try
             {
-                serverVersion =  BitConverter.ToUInt32(ReadMessage(), 0);
+                serverVersion =  BitConverter.ToUInt32(_blockingResponseMap[CommandId.RequestProtocolVersion], 0);
             }
             catch (SocketException e) when (e.SocketErrorCode == SocketError.TimedOut)
             {
@@ -393,7 +407,7 @@ namespace OpenRGB.NET
         /// <inheritdoc/>
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 if (disposing)
                 {
@@ -402,6 +416,7 @@ namespace OpenRGB.NET
                     {
                         try
                         {
+                            _socket?.Close();
                             _socket?.Shutdown(SocketShutdown.Both);
                             _socket?.Dispose();
                         }
@@ -410,7 +425,7 @@ namespace OpenRGB.NET
                             //Don't throw in Dispose
                         }
                     }
-                    disposed = true;
+                    _disposed = true;
                 }
             }
         }

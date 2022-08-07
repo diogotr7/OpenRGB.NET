@@ -1,4 +1,5 @@
-﻿using OpenRGB.NET.Enums;
+﻿using System;
+using OpenRGB.NET.Enums;
 using OpenRGB.NET.Models;
 
 namespace OpenRGB.NET
@@ -8,6 +9,11 @@ namespace OpenRGB.NET
     /// </summary>
     public interface IOpenRGBClient
     {
+        /// <summary>
+        /// Triggered when openrgb device list updates
+        /// </summary>
+        event EventHandler<EventArgs> DeviceListUpdated;
+
         /// <summary>
         /// Represents the connection status of the socket to the server
         /// </summary>

@@ -27,7 +27,7 @@ namespace OpenRGB.NET
         public bool Connected => _socket?.Connected ?? false;
 
         /// <inheritdoc/>
-        public uint MaxSupportedProtocolVersion => 3;
+        public uint MaxSupportedProtocolVersion => 2;
 
         /// <inheritdoc/>
         public uint ClientProtocolVersion { get; }

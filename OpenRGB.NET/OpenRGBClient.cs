@@ -21,7 +21,7 @@ namespace OpenRGB.NET
         private readonly int _timeout;
         private readonly BlockingResponseMap _blockingResponseMap;
         private bool _disposed;
-        private readonly byte [] _buffer = new byte[PacketHeader.Size];
+        private readonly byte [] _headerBuffer = new byte[PacketHeader.Size];
 
         /// <inheritdoc/>
         public bool Connected => _socket?.Connected ?? false;
@@ -81,7 +81,7 @@ namespace OpenRGB.NET
             if (_socket.Connected)
             {
                 _socket.EndConnect(result);
-                _socket.BeginReceive(_buffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
+                _socket.BeginReceive(_headerBuffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
             }
             else
             {
@@ -137,11 +137,8 @@ namespace OpenRGB.NET
             }
             _socket.EndReceive(ar);
 
-            //we need a byte buffer to store the header
-            var headerBuffer = new byte[PacketHeader.Size];
-            Buffer.BlockCopy(_buffer, 0, headerBuffer, 0, PacketHeader.Size);
-            //and decode it into a header to know how many bytes we will receive next
-            var header = PacketHeader.Decode(headerBuffer);
+            //decode _headerBuffer into a header to know how many bytes we will receive next
+            var header = PacketHeader.Decode(_headerBuffer);
 
             if (header.Command == (uint)CommandId.DeviceListUpdated)
             {
@@ -158,7 +155,10 @@ namespace OpenRGB.NET
                 _blockingResponseMap[header.Command] = dataBuffer;
             }
 
-            _socket.BeginReceive(_buffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
+            if (_socket.Connected)
+            {
+                _socket.BeginReceive(_headerBuffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
+            }
         }
 #endregion
 

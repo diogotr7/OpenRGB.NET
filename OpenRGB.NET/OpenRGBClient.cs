@@ -131,17 +131,30 @@ namespace OpenRGB.NET
 
         private void OnReceive(IAsyncResult ar)
         {
-            if (_socket is not {Connected: true})
+            if (_socket is not {Connected: true} || _disposed)
             {
                 return;
             }
-            _socket.EndReceive(ar);
+
+            try
+            {
+                _socket.EndReceive(ar);
+            }
+            catch
+            {
+                //means socket is closed. throwing exception here would crash the host app. (this is separate thread)
+                return;
+            }
 
             //decode _headerBuffer into a header to know how many bytes we will receive next
             var header = PacketHeader.Decode(_headerBuffer);
 
             if (header.Command == (uint)CommandId.DeviceListUpdated)
             {
+                var dataBuffer = new byte[header.DataLength];
+                _socket.ReceiveFull(dataBuffer);
+                
+                RestartReceive();
                 //notify users to update device list
                 DeviceListUpdated?.Invoke(this, EventArgs.Empty);
             }
@@ -153,9 +166,14 @@ namespace OpenRGB.NET
 
                 //sort the response types on response map
                 _blockingResponseMap[header.Command] = dataBuffer;
-            }
 
-            if (_socket.Connected)
+                RestartReceive();
+            }
+        }
+
+        private void RestartReceive()
+        {
+            if (_socket.Connected && !_disposed)
             {
                 _socket.BeginReceive(_headerBuffer, 0, PacketHeader.Size, SocketFlags.None, OnReceive, null);
             }
@@ -411,6 +429,7 @@ namespace OpenRGB.NET
             {
                 if (disposing)
                 {
+                    _disposed = true;
                     // Managed object only
                     if (_socket != null && _socket.Connected)
                     {
@@ -425,7 +444,6 @@ namespace OpenRGB.NET
                             //Don't throw in Dispose
                         }
                     }
-                    _disposed = true;
                 }
             }
         }

@@ -46,7 +46,7 @@ namespace OpenRGB.NET.Models
             if (buffer.Length != Size)
                 throw new ArgumentException($"{nameof(buffer)} has length {buffer.Length}, should be {Size}");
             if (Encoding.ASCII.GetString(buffer, 0, 4) != "ORGB")
-                throw new ArgumentException("Magic bytes \"ORGB\" were not found");
+                throw new ArgumentException($"Magic bytes \"ORGB\" were not found. Data was {buffer}");
 
             return new PacketHeader(
                 BitConverter.ToUInt32(buffer, 4),

@@ -58,6 +58,7 @@ namespace OpenRGB.NET
             _name = name;
             _timeout = timeout;
             _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            _socket.NoDelay = true;
 
             if (protocolVersion > MaxSupportedProtocolVersion)
                 throw new ArgumentException("Client protocol version provided higher than supported.", nameof(protocolVersion));

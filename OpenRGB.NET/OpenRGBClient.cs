@@ -445,6 +445,7 @@ namespace OpenRGB.NET
                             //Don't throw in Dispose
                         }
                     }
+                    _disposed = true;
                 }
             }
         }

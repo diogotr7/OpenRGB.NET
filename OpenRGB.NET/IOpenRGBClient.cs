@@ -95,6 +95,12 @@ namespace OpenRGB.NET
         void SetMode(int deviceId, int modeId, uint? speed = null, Direction? direction = null, Color[] colors = null);
 
         /// <summary>
+        /// Updates the device with any changes made to the active mode.
+        /// </summary>
+        /// <param name="deviceId"></param>
+        void SaveMode(int deviceId);
+
+        /// <summary>
         /// Updates the LEDs for the give device.
         /// Make sure the array has the correct number of LEDs.
         /// </summary>

@@ -73,6 +73,11 @@
         /// <summary>
         /// Calls RGBController::UpdateMode() on the server.
         /// </summary>
-        UpdateMode = 1101
+        UpdateMode = 1101,
+
+        /// <summary>
+        /// Calls RGBController::SaveMode() on the server.
+        /// </summary>
+        SaveMode = 1102,
     }
 }

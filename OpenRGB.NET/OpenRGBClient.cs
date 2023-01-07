@@ -387,6 +387,9 @@ namespace OpenRGB.NET
                 }
             }
         }
+
+        /// <inheritdoc/>
+        public void SaveMode(int deviceId) => SendMessage(CommandId.SaveMode, null, (uint)deviceId);
 #endregion
 
 #region Dispose

@@ -3,7 +3,7 @@
     /// <summary>
     /// Enum representing the various commands supported by the SDK server.
     /// </summary>
-    internal enum CommandId
+    public enum CommandId
     {
         /// <summary>
         /// Request the number of device controllers from the server.
@@ -24,6 +24,11 @@
         /// Send the server the name of the client.
         /// </summary>
         SetClientName = 50,
+
+        /// <summary>
+        /// Indicates device list has been updated.
+        /// </summary>
+        DeviceListUpdated = 100,
 
         /// <summary>
         /// Request list of profiles from the server.

@@ -13,6 +13,7 @@
     <PackageProjectUrl>https://github.com/diogotr7/OpenRGB.NET</PackageProjectUrl>
     <RepositoryUrl>https://github.com/diogotr7/OpenRGB.NET</RepositoryUrl>
     <PackageTags>openrgb, rgb, sdk, client</PackageTags>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

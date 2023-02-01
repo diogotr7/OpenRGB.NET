@@ -13,12 +13,10 @@ internal static class SocketExtensions
         while (total < size)
         {
             var recv = socket.Receive(buffer[total..]);
-            if (recv == 0)
-            {
-                break;
-            }
+            if (recv == 0) break;
             total += recv;
         }
+
         return total;
     }
 
@@ -30,12 +28,10 @@ internal static class SocketExtensions
         while (total < size)
         {
             var recv = socket.Send(buffer[total..]);
-            if (recv == 0)
-            {
-                break;
-            }
+            if (recv == 0) break;
             total += recv;
         }
+
         return total;
     }
 }

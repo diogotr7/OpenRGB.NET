@@ -5,7 +5,7 @@ using OpenRGB.NET.Utils;
 namespace OpenRGB.NET;
 
 /// <summary>
-/// Packet Header class containing the command ID and the length of the data to be sent.
+///     Packet Header class containing the command ID and the length of the data to be sent.
 /// </summary>
 internal readonly struct PacketHeader
 {
@@ -25,9 +25,9 @@ internal readonly struct PacketHeader
 
     internal byte[] ToArray()
     {
-        byte[] array = new byte[Length];
+        var array = new byte[Length];
         Span<byte> span = array;
-        
+
         MagicBytes.CopyTo(span);
         BitConverter.TryWriteBytes(span[4..], DeviceId);
         BitConverter.TryWriteBytes(span[8..], Command);
@@ -40,11 +40,11 @@ internal readonly struct PacketHeader
     {
         if (!reader.PeekBytes(4).SequenceEqual(MagicBytes))
             throw new ArgumentException($"Magic bytes \"{Magic}\" were not found. Data was {reader.Span.ToArray()}");
-            
+
         reader.Skip(4);
         return new PacketHeader(reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32());
     }
-    
+
     internal void WriteTo(ref SpanWriter writer)
     {
         writer.WriteBytes(MagicBytes);

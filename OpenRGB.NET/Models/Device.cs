@@ -1,148 +1,139 @@
-﻿using OpenRGB.NET.Utils;
-using System;
+﻿using System;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
 /// <summary>
-/// Device class containing all the info present in an OpenRGB RGBController
+///     Device class containing all the info present in an OpenRGB RGBController
 /// </summary>
 public class Device
 {
     /// <summary>
-    /// The owning OpenRGBClient of the device.
+    ///     The owning OpenRGBClient of the device.
     /// </summary>
-    public IOpenRGBClient Client { get; private set; }
+    public IOpenRgbClient Client { get; private init; }
 
     /// <summary>
-    /// The ID of the device.
+    ///     The index of the device.
     /// </summary>
-    public int ID { get; private set; }
+    public int Index { get; private init; }
 
     /// <summary>
-    /// The type of the device.
+    ///     The type of the device.
     /// </summary>
-    public DeviceType Type { get; private set; }
+    public DeviceType Type { get; private init; }
 
     /// <summary>
-    /// The name of the device.
+    ///     The name of the device.
     /// </summary>
-    public string Name { get; private set; }
+    public string Name { get; private init; }
 
     /// <summary>
-    /// The vendor of the device. Will be null on protocol versions below 1.
+    ///     The vendor of the device. Will be null on protocol versions below 1.
     /// </summary>
-    public string Vendor { get; private set; }
+    public string Vendor { get; private init; }
 
     /// <summary>
-    /// The description of device.
+    ///     The description of device.
     /// </summary>
-    public string Description { get; private set; }
+    public string Description { get; private init; }
 
     /// <summary>
-    /// The version of the device. Usually a firmware version.
+    ///     The version of the device. Usually a firmware version.
     /// </summary>
-    public string Version { get; private set; }
+    public string Version { get; private init; }
 
     /// <summary>
-    /// The serial number of the device.
+    ///     The serial number of the device.
     /// </summary>
-    public string Serial { get; private set; }
+    public string Serial { get; private init; }
 
     /// <summary>
-    /// The location of the device. Usually the device file on the filesystem.
+    ///     The location of the device. Usually the device file on the filesystem.
     /// </summary>
-    public string Location { get; private set; }
+    public string Location { get; private init; }
 
     /// <summary>
-    /// The index of the currently active mode on the device.
+    ///     The index of the currently active mode on the device.
     /// </summary>
-    public int ActiveModeIndex { get; private set; }
+    public int ActiveModeIndex { get; private init; }
 
     /// <summary>
-    /// The modes the device can be set to.
+    ///     The modes the device can be set to.
     /// </summary>
-    public Mode[] Modes { get; private set; }
+    public Mode[] Modes { get; private init; }
 
     /// <summary>
-    /// The lighting zones present on the device.
+    ///     The lighting zones present on the device.
     /// </summary>
-    public Zone[] Zones { get; private set; }
+    public Zone[] Zones { get; private init; }
 
     /// <summary>
-    /// All the leds present on the device.
+    ///     All the leds present on the device.
     /// </summary>
-    public Led[] Leds { get; private set; }
+    public Led[] Leds { get; private init; }
 
     /// <summary>
-    /// The colors of all the leds present on the device.
+    ///     The colors of all the leds present on the device.
     /// </summary>
-    public Color[] Colors { get; private set; }
+    public Color[] Colors { get; private init; }
 
     /// <summary>
-    /// Shortcut for Modes[ActiveModeIndex], returns the currently actuve mode.
+    ///     Shortcut for Modes[ActiveModeIndex], returns the currently active mode.
     /// </summary>
     public Mode ActiveMode => Modes[ActiveModeIndex];
 
-
-    internal static Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, IOpenRGBClient client, int deviceId)
+    internal static Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, int deviceIndex, IOpenRgbClient client)
     {
-        var dev = new Device
-        {
-            ID = deviceId,
-            Client = client
-        };
-
         var duplicatePacketLength = reader.ReadUInt32();
 
         var deviceType = reader.ReadInt32();
-        if (Enum.IsDefined(typeof(DeviceType), deviceType))
-        {
-            dev.Type = (DeviceType)deviceType;
-        }
-        else
-        {
-            dev.Type = DeviceType.Unknown;
-        }
-
-        dev.Name = reader.ReadLengthAndString();
-
-        if (protocol.SupportsVendorString)
-        {
-            dev.Vendor = reader.ReadLengthAndString();
-        }
-        else
-        {
-            dev.Vendor = null;
-        }
-
-        dev.Description = reader.ReadLengthAndString();
-
-        dev.Version = reader.ReadLengthAndString();
-
-        dev.Serial = reader.ReadLengthAndString();
-
-        dev.Location = reader.ReadLengthAndString();
- 
+        var name = reader.ReadLengthAndString();
+        var vendor = protocol.SupportsVendorString ? reader.ReadLengthAndString() : null;
+        var description = reader.ReadLengthAndString();
+        var version = reader.ReadLengthAndString();
+        var serial = reader.ReadLengthAndString();
+        var location = reader.ReadLengthAndString();
         var modeCount = reader.ReadUInt16();
-        dev.ActiveModeIndex = reader.ReadInt32();
-        dev.Modes = Mode.ReadManyFrom(ref reader, modeCount, protocol);
-
+        var activeMode = reader.ReadInt32();
+        var modes = Mode.ReadManyFrom(ref reader, modeCount, protocol);
         var zoneCount = reader.ReadUInt16();
-        dev.Zones = Zone.ReadManyFrom(ref reader, zoneCount, client, deviceId, protocol);
-
+        var zones = Zone.ReadManyFrom(ref reader, zoneCount, client, deviceIndex, protocol);
         var ledCount = reader.ReadUInt16();
-        dev.Leds = Led.ReadManyFrom(ref reader, ledCount);
-
+        var leds = Led.ReadManyFrom(ref reader, ledCount);
         var colorCount = reader.ReadUInt16();
-        dev.Colors = Color.ReadManyFrom(ref reader, colorCount);
-        return dev;
+        var colors = Color.ReadManyFrom(ref reader, colorCount);
+
+        return new Device
+        {
+            Type = Enum.IsDefined(typeof(DeviceType), deviceType) ? (DeviceType)deviceType : DeviceType.Unknown,
+            Name = name,
+            Vendor = vendor,
+            Description = description,
+            Version = version,
+            Serial = serial,
+            Location = location,
+            ActiveModeIndex = activeMode,
+            Modes = modes,
+            Zones = zones,
+            Leds = leds,
+            Colors = colors,
+            Index = deviceIndex,
+            Client = client
+        };
     }
 
     /// <summary>
-    /// Calls UpdateLeds(ID, colors) on the owning client.
+    ///     Calls UpdateLeds(ID, colors) on the owning client.
     /// </summary>
-    public void Update(Color[] colors) => Client.UpdateLeds(ID, colors);
+    public void Update(Color[] colors)
+    {
+        Client.UpdateLeds(Index, colors);
+    }
 
-    /// <inheritdoc/>
-    public override string ToString() => $"{Type}: {Name}";
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return $"{Type}: {Name}";
+    }
 }

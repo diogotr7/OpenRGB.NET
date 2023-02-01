@@ -24,35 +24,35 @@ internal ref struct SpanReader
 
     public ushort ReadUInt16()
     {
-        ushort value = BinaryPrimitives.ReadUInt16LittleEndian(Span[Position..]);
+        var value = BinaryPrimitives.ReadUInt16LittleEndian(Span[Position..]);
         Position += sizeof(ushort);
         return value;
     }
 
     public int ReadInt32()
     {
-        int value = BinaryPrimitives.ReadInt32LittleEndian(Span[Position..]);
+        var value = BinaryPrimitives.ReadInt32LittleEndian(Span[Position..]);
         Position += sizeof(int);
         return value;
     }
 
     public uint ReadUInt32()
     {
-        uint value = BinaryPrimitives.ReadUInt32LittleEndian(Span[Position..]);
+        var value = BinaryPrimitives.ReadUInt32LittleEndian(Span[Position..]);
         Position += sizeof(uint);
         return value;
     }
 
     public ReadOnlySpan<byte> ReadBytes(int length)
     {
-        ReadOnlySpan<byte> value = Span[Position..(Position + length)];
+        var value = Span[Position..(Position + length)];
         Position += length;
         return value;
     }
 
     public byte ReadByte()
     {
-        byte value = Span[Position];
+        var value = Span[Position];
         Position += sizeof(byte);
         return value;
     }

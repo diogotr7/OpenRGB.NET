@@ -1,4 +1,3 @@
-using OpenRGB.NET.Utils;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -6,42 +5,44 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
 /// <summary>
-/// Client for the OpenRGB SDK.
+///     Client for the OpenRGB SDK.
 /// </summary>
-public class OpenRGBClient : IDisposable, IOpenRGBClient
+public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 {
     private const int MAX_PROTOCOL = 4;
+    private readonly byte[] _headerBuffer = new byte[PacketHeader.Length];
     private readonly string _ip;
-    private readonly int _port;
     private readonly string _name;
+    private readonly Dictionary<uint, BlockingCollection<byte[]>> _pendingRequests;
+    private readonly int _port;
     private readonly Socket _socket;
     private readonly int _timeout;
-    private readonly Dictionary<uint, BlockingCollection<byte[]>> _pendingRequests;
-    private readonly byte [] _headerBuffer = new byte[PacketHeader.Length];
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool Connected => _socket?.Connected ?? false;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public uint MaxSupportedProtocolVersion => MAX_PROTOCOL;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public uint ClientProtocolVersion { get; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public uint CommonProtocolVersion { get; private set; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public event EventHandler<EventArgs> DeviceListUpdated;
 
     #region Basic init methods
+
     /// <summary>
-    /// Sets all the needed parameters to connect to the server.
-    /// Connects to the server immediately unless autoconnect is set to false.
+    ///     Sets all the needed parameters to connect to the server.
+    ///     Connects to the server immediately unless autoconnect is set to false.
     /// </summary>
     /// <param name="ip"></param>
     /// <param name="port"></param>
@@ -49,19 +50,21 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
     /// <param name="autoconnect"></param>
     /// <param name="timeout"></param>
     /// <param name="protocolVersion"></param>
-    public OpenRGBClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true, int timeout = 1000, uint protocolVersion = MAX_PROTOCOL)
+    public OpenRgbClient(string ip = "127.0.0.1", int port = 6742, string name = "OpenRGB.NET", bool autoconnect = true,
+        int timeout = 1000, uint protocolVersion = MAX_PROTOCOL)
     {
         _ip = ip;
         _port = port;
         _name = name;
         _timeout = timeout;
-        _pendingRequests = new();
+        _pendingRequests = new Dictionary<uint, BlockingCollection<byte[]>>();
         SetupPendingRequests();
-        _socket = new(SocketType.Stream, ProtocolType.Tcp);
+        _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _socket.NoDelay = true;
 
         if (protocolVersion > MaxSupportedProtocolVersion)
-            throw new ArgumentException("Client protocol version provided higher than supported.", nameof(protocolVersion));
+            throw new ArgumentException("Client protocol version provided higher than supported.",
+                nameof(protocolVersion));
 
         CommonProtocolVersion = uint.MaxValue;
         ClientProtocolVersion = protocolVersion;
@@ -72,18 +75,16 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
     private void SetupPendingRequests()
     {
         foreach (var item in Enum.GetValues<CommandId>())
-        {
             _pendingRequests[(uint)item] = new BlockingCollection<byte[]>();
-        }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void Connect()
     {
         if (Connected)
             return;
 
-        IAsyncResult result = _socket.BeginConnect(_ip, _port, null, null);
+        var result = _socket.BeginConnect(_ip, _port, null, null);
 
         result.AsyncWaitHandle.WaitOne(_timeout);
 
@@ -107,9 +108,10 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
     #endregion
 
     #region Basic Comms methods
+
     /// <summary>
-    /// Sends a message to the server with the given command and buffer of data.
-    /// Takes care of sending a header packet first to tell the server how many bytes to read.
+    ///     Sends a message to the server with the given command and buffer of data.
+    ///     Takes care of sending a header packet first to tell the server how many bytes to read.
     /// </summary>
     /// <param name="command"></param>
     /// <param name="buffer"></param>
@@ -120,10 +122,10 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         //and the size of the packet that follows
         var packetSize = buffer.Length;
         var header = new PacketHeader(deviceId, (uint)command, (uint)packetSize);
-            
+
         Span<byte> headerBuffer = stackalloc byte[PacketHeader.Length];
-        SpanWriter headerWriter = new SpanWriter(headerBuffer);
-            
+        var headerWriter = new SpanWriter(headerBuffer);
+
         header.WriteTo(ref headerWriter);
         var result = _socket.Send(headerBuffer);
 
@@ -151,10 +153,7 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
 
     private void OnReceive(IAsyncResult ar)
     {
-        if (_socket is not {Connected: true} || _disposed)
-        {
-            return;
-        }
+        if (_socket is not { Connected: true } || _disposed) return;
 
         try
         {
@@ -174,7 +173,7 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         {
             var dataBuffer = new byte[header.DataLength];
             _socket.ReceiveFull(dataBuffer);
-                
+
             RestartReceive();
             //notify users to update device list
             DeviceListUpdated?.Invoke(this, EventArgs.Empty);
@@ -194,20 +193,20 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
     private void RestartReceive()
     {
         if (_socket.Connected && !_disposed)
-        {
             _socket.BeginReceive(_headerBuffer, 0, PacketHeader.Length, SocketFlags.None, OnReceive, null);
-        }
     }
+
     #endregion
 
     #region Request Methods
-    /// <inheritdoc/>
+
+    /// <inheritdoc />
     public int GetControllerCount()
     {
         return (int)BitConverter.ToUInt32(SendMessageAndGetResponse(CommandId.RequestControllerCount), 0);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Device GetControllerData(int id)
     {
         if (id < 0)
@@ -216,35 +215,35 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         var response = SendMessageAndGetResponse(CommandId.RequestControllerData,
             BitConverter.GetBytes(CommonProtocolVersion), (uint)id);
         var responseReader = new SpanReader(response);
-        return Device.ReadFrom(ref responseReader, ProtocolVersion.FromNumber(CommonProtocolVersion), this, id);
+        return Device.ReadFrom(ref responseReader, ProtocolVersion.FromNumber(CommonProtocolVersion), id, this);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Device[] GetAllControllerData()
     {
         var count = GetControllerCount();
 
         var array = new Device[count];
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
             array[i] = GetControllerData(i);
 
         return array;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string[] GetProfiles()
     {
         if (ClientProtocolVersion < 2)
             throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
 
-        var buffer = SendMessageAndGetResponse(CommandId.RequestProfiles, BitConverter.GetBytes(CommonProtocolVersion), 0);
+        var buffer = SendMessageAndGetResponse(CommandId.RequestProfiles, BitConverter.GetBytes(CommonProtocolVersion));
 
         var reader = new SpanReader(buffer);
         var dataSize = reader.ReadUInt32();
         var count = reader.ReadUInt16();
         var profiles = new string[count];
 
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
             profiles[i] = reader.ReadLengthAndString();
 
         return profiles;
@@ -253,24 +252,28 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
     private uint GetServerProtocolVersion()
     {
         uint serverVersion;
-            
+
         _socket.ReceiveTimeout = 1000;
         try
         {
-            serverVersion = BitConverter.ToUInt32(SendMessageAndGetResponse(CommandId.RequestProtocolVersion, BitConverter.GetBytes(ClientProtocolVersion)));
+            serverVersion = BitConverter.ToUInt32(SendMessageAndGetResponse(CommandId.RequestProtocolVersion,
+                BitConverter.GetBytes(ClientProtocolVersion)));
         }
         catch (SocketException e) when (e.SocketErrorCode == SocketError.TimedOut)
         {
             serverVersion = 0;
         }
+
         _socket.ReceiveTimeout = 0;
 
         return serverVersion;
     }
+
     #endregion
 
     #region Update Methods
-    /// <inheritdoc/>
+
+    /// <inheritdoc />
     public void UpdateLeds(int deviceId, Color[] colors)
     {
         if (colors is null)
@@ -278,13 +281,13 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
 
         if (deviceId < 0)
             throw new ArgumentException(nameof(deviceId));
-            
-        int packetLength = (int)PacketFactory.UpdateLedsLength(colors.Length);
-        byte[] rent = ArrayPool<byte>.Shared.Rent(packetLength);
+
+        var packetLength = (int)PacketFactory.UpdateLedsLength(colors.Length);
+        var rent = ArrayPool<byte>.Shared.Rent(packetLength);
         try
         {
-            Span<byte> packet = rent.AsSpan(0, packetLength);
-            SpanWriter writer = new SpanWriter(packet);
+            var packet = rent.AsSpan(0, packetLength);
+            var writer = new SpanWriter(packet);
 
             PacketFactory.UpdateLeds(ref writer, colors);
 
@@ -296,24 +299,24 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void UpdateZone(int deviceId, int zoneId, Color[] colors)
     {
         if (colors is null)
             throw new ArgumentNullException(nameof(colors));
 
         if (deviceId < 0)
-            throw new ArgumentException(nameof(deviceId));
+            throw new ArgumentException("Invalid device id.", nameof(deviceId));
 
         if (zoneId < 0)
-            throw new ArgumentException(nameof(zoneId));
-            
-        int packetLength = (int)PacketFactory.UpdateZoneLedsLength(colors.Length);
-        byte[] rent = ArrayPool<byte>.Shared.Rent(packetLength);
+            throw new ArgumentException("Invalid zone id", nameof(zoneId));
+
+        var packetLength = (int)PacketFactory.UpdateZoneLedsLength(colors.Length);
+        var rent = ArrayPool<byte>.Shared.Rent(packetLength);
         try
         {
-            Span<byte> packet = rent.AsSpan(0, packetLength);
-            SpanWriter writer = new SpanWriter(packet);
+            var packet = rent.AsSpan(0, packetLength);
+            var writer = new SpanWriter(packet);
 
             PacketFactory.UpdateZoneLeds(ref writer, (uint)zoneId, colors);
 
@@ -325,10 +328,13 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         }
     }
 
-    /// <inheritdoc/>
-    public void SetCustomMode(int deviceId) => SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
+    /// <inheritdoc />
+    public void SetCustomMode(int deviceId)
+    {
+        SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
+    }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void LoadProfile(string profile)
     {
         if (ClientProtocolVersion < 2)
@@ -337,7 +343,7 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void SaveProfile(string profile)
     {
         if (ClientProtocolVersion < 2)
@@ -346,7 +352,7 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         SendMessage(CommandId.SaveProfile, Encoding.ASCII.GetBytes(profile + '\0'));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void DeleteProfile(string profile)
     {
         if (ClientProtocolVersion < 2)
@@ -355,7 +361,7 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
         SendMessage(CommandId.DeleteProfile, Encoding.ASCII.GetBytes(profile + '\0'));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void SetMode(int deviceId, int modeId,
         uint? speed = null,
         Direction? direction = null,
@@ -373,31 +379,33 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
             if (!targetMode.HasFlag(ModeFlags.HasSpeed))
                 throw new InvalidOperationException("Cannot set speed on a mode that doesn't use this parameter");
 
-            targetMode.Speed = speed.Value;
+            targetMode.SetSpeed(speed.Value);
         }
+
         if (direction.HasValue)
         {
             if (!targetMode.HasFlag(ModeFlags.HasDirection))
                 throw new InvalidOperationException("Cannot set direction on a mode that doesn't use this parameter");
 
-            targetMode.Direction = direction.Value;
+            targetMode.SetDirection(direction.Value);
         }
+
         if (colors != null)
         {
             if (colors.Length != targetMode.Colors.Length)
                 throw new InvalidOperationException("Incorrect number of colors supplied");
 
-            targetMode.Colors = colors;
+            targetMode.SetColors(colors);
         }
-            
+
         var packetLength = (int)targetMode.GetLength();
         var rent = ArrayPool<byte>.Shared.Rent(packetLength);
         try
         {
-            Span<byte> packet = rent.AsSpan(0, packetLength);
-            SpanWriter writer = new SpanWriter(packet);
+            var packet = rent.AsSpan(0, packetLength);
+            var writer = new SpanWriter(packet);
 
-            targetMode.WriteTo(ref writer, CommonProtocolVersion);
+            targetMode.WriteTo(ref writer);
 
             SendMessage(CommandId.UpdateMode, packet, (uint)deviceId);
         }
@@ -406,21 +414,21 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
             ArrayPool<byte>.Shared.Return(rent);
         }
     }
+
     #endregion
 
     #region Dispose
+
     private bool _disposed;
-    /// <inheritdoc/>
-    protected virtual void Dispose(bool disposing)
+
+    private void Dispose(bool disposing)
     {
         if (!_disposed)
-        {
             if (disposing)
             {
                 _disposed = true;
                 // Managed object only
                 if (_socket != null && _socket.Connected)
-                {
                     try
                     {
                         _socket?.Close();
@@ -431,20 +439,20 @@ public class OpenRGBClient : IDisposable, IOpenRGBClient
                     {
                         //Don't throw in Dispose
                     }
-                }
+
                 _disposed = true;
             }
-        }
     }
 
     /// <summary>
-    /// Disposes of the connection to the server.
-    /// To connect again, instantiate a new OpenRGBClient.
+    ///     Disposes of the connection to the server.
+    ///     To connect again, instantiate a new OpenRGBClient.
     /// </summary>
     public void Dispose()
     {
-        Dispose(disposing: true);
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
+
     #endregion
 }

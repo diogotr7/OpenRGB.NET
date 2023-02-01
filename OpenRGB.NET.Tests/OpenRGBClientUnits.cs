@@ -29,7 +29,7 @@ public class OpenRGBClientUnits : IDisposable
     public void ClientConnectToServer()
     {
         Stopwatch sw = Stopwatch.StartNew();
-        OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: ClientConnectToServer");
+        OpenRgbClient client = new OpenRgbClient(name: "OpenRGB.NET Test: ClientConnectToServer");
         client.Connect();
         client.Dispose();
         sw.Stop();
@@ -40,7 +40,7 @@ public class OpenRGBClientUnits : IDisposable
     public void ListController()
     {
         Stopwatch sw = Stopwatch.StartNew();
-        OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: ListController");
+        OpenRgbClient client = new OpenRgbClient(name: "OpenRGB.NET Test: ListController");
 
         int nbController = client.GetControllerCount();
         for (int i = 0; i < nbController; i++)
@@ -58,7 +58,7 @@ public class OpenRGBClientUnits : IDisposable
     public void DisposePatternListController()
     {
         Stopwatch sw = Stopwatch.StartNew();
-        using OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: DisposePatternListController", autoconnect: true);
+        using OpenRgbClient client = new OpenRgbClient(name: "OpenRGB.NET Test: DisposePatternListController", autoconnect: true);
         int nbController = client.GetControllerCount();
         for (int i = 0; i < nbController; i++)
         {
@@ -73,7 +73,7 @@ public class OpenRGBClientUnits : IDisposable
     public void CheckLedChange()
     {
         Stopwatch sw = Stopwatch.StartNew();
-        var client = new OpenRGBClient(name: "OpenRGB.NET Test: CheckLedChange");
+        var client = new OpenRgbClient(name: "OpenRGB.NET Test: CheckLedChange");
         var controllerCount = client.GetControllerCount();
         var devices = new Device[controllerCount];
 
@@ -104,7 +104,7 @@ public class OpenRGBClientUnits : IDisposable
         //https://gitlab.com/CalcProgrammer1/OpenRGB/-/issues/350
         //Thread.Sleep(150);
         Stopwatch sw = Stopwatch.StartNew();
-        var client = new OpenRGBClient(name: "OpenRGB.NET Test: UpdateZoneTypes");
+        var client = new OpenRgbClient(name: "OpenRGB.NET Test: UpdateZoneTypes");
         var controllerCount = client.GetControllerCount();
         var devices = new Device[controllerCount];
 
@@ -158,7 +158,7 @@ public class OpenRGBClientUnits : IDisposable
     public void SetMode()
     {
         Stopwatch sw = Stopwatch.StartNew();
-        using var client = new OpenRGBClient();
+        using var client = new OpenRgbClient();
         var devices = client.GetAllControllerData();
         client.SetMode(0, 0);
         //for testing purposes
@@ -182,7 +182,7 @@ public class OpenRGBClientUnits : IDisposable
     [Fact]
     public void LoadRandomProfile()
     {
-        using OpenRGBClient client = new OpenRGBClient(name: "OpenRGB.NET Test: LoadRandomProfile");
+        using OpenRgbClient client = new OpenRgbClient(name: "OpenRGB.NET Test: LoadRandomProfile");
         var profiles = client.GetProfiles();
         if (profiles.Length == 0)
         {
@@ -197,7 +197,7 @@ public class OpenRGBClientUnits : IDisposable
     public void UseAfterDispose()
     {
         Stopwatch sw = Stopwatch.StartNew();
-        var client = new OpenRGBClient();
+        var client = new OpenRgbClient();
         client.Dispose();
 
         Assert.Throws<ObjectDisposedException>(() => client.GetControllerCount());
@@ -207,11 +207,11 @@ public class OpenRGBClientUnits : IDisposable
     [Fact]
     public void TestProtocolVersionOne()
     {
-        using OpenRGBClient versionZero = new OpenRGBClient(protocolVersion: 0);
+        using OpenRgbClient versionZero = new OpenRgbClient(protocolVersion: 0);
         var devicesZero = versionZero.GetAllControllerData();
         Assert.All(devicesZero, d => Assert.Null(d.Vendor));
 
-        using OpenRGBClient versionOne = new OpenRGBClient(protocolVersion: 1);
+        using OpenRgbClient versionOne = new OpenRgbClient(protocolVersion: 1);
         var devicesOne = versionOne.GetAllControllerData();
         Assert.All(devicesOne, d => Assert.NotNull(d.Vendor));
     }
@@ -219,10 +219,10 @@ public class OpenRGBClientUnits : IDisposable
     [Fact]
     public void TestProtocolVersionTwo()
     {
-        using OpenRGBClient versionOne = new OpenRGBClient(protocolVersion: 1);
+        using OpenRgbClient versionOne = new OpenRgbClient(protocolVersion: 1);
         Assert.Throws<NotSupportedException>(() => versionOne.GetProfiles());
 
-        using OpenRGBClient versionTwo = new OpenRGBClient(protocolVersion: 2);
+        using OpenRgbClient versionTwo = new OpenRgbClient(protocolVersion: 2);
         var exception = Record.Exception(() => versionTwo.GetProfiles());
         Assert.Null(exception);
     }

@@ -3,63 +3,58 @@
 namespace OpenRGB.NET;
 
 /// <summary>
-/// Matrix Map class for the matrix Zone type
+///     Matrix Map class for the matrix Zone type
 /// </summary>
 public class MatrixMap
 {
     /// <summary>
-    /// The height of the matrix.
+    ///     The height of the matrix.
     /// </summary>
-    public uint Height { get; private set; }
+    public uint Height { get; private init; }
 
     /// <summary>
-    /// The width of the matrix.
+    ///     The width of the matrix.
     /// </summary>
-    public uint Width { get; private set; }
+    public uint Width { get; private init; }
 
     /// <summary>
-    /// The matrix.
+    ///     The matrix.
     /// </summary>
-    public uint[,] Matrix { get; private set; }
+    public uint[,] Matrix { get; private init; }
 
     internal uint Length => Height * Width * 4 + 8;
 
     /// <summary>
-    /// Decodes a byte array into a matrix map
+    ///     Decodes a byte array into a matrix map
     /// </summary>
     /// <param name="reader"></param>
     internal static MatrixMap ReadFrom(ref SpanReader reader)
     {
-        var matx = new MatrixMap();
+        var height = reader.ReadUInt32();
 
-        matx.Height = reader.ReadUInt32();
+        var width = reader.ReadUInt32();
 
-        matx.Width = reader.ReadUInt32();
+        var matrix = new uint[height, width];
 
-        matx.Matrix = new uint[matx.Height, matx.Width];
+        for (var i = 0; i < height; i++)
+        for (var j = 0; j < width; j++)
+            matrix[i, j] = reader.ReadUInt32();
 
-        for (int i = 0; i < matx.Height; i++)
+        return new MatrixMap
         {
-            for (int j = 0; j < matx.Width; j++)
-            {
-                matx.Matrix[i, j] = reader.ReadUInt32();
-            }
-        }
-
-        return matx;
+            Height = height,
+            Width = width,
+            Matrix = matrix
+        };
     }
-        
+
     internal void WriteTo(ref SpanWriter writer)
     {
         writer.WriteUInt32(Height);
         writer.WriteUInt32(Width);
 
-        for (int i = 0; i < Height; i++)
-        {
-            for (int j = 0; j < Width; j++)
-            {
-                writer.WriteUInt32(Matrix[i, j]);
-            }
-        }
+        for (var i = 0; i < Height; i++)
+        for (var j = 0; j < Width; j++)
+            writer.WriteUInt32(Matrix[i, j]);
     }
 }

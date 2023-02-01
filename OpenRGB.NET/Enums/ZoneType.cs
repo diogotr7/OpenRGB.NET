@@ -1,23 +1,22 @@
-﻿namespace OpenRGB.NET.Enums
+﻿namespace OpenRGB.NET;
+
+/// <summary>
+/// Enum representing the different types a zone can be.
+/// </summary>
+public enum ZoneType
 {
     /// <summary>
-    /// Enum representing the different types a zone can be.
+    /// This zone represents one LED.
     /// </summary>
-    public enum ZoneType
-    {
-        /// <summary>
-        /// This zone represents one LED.
-        /// </summary>
-        Single,
+    Single,
 
-        /// <summary>
-        /// This zone represents s sequence of LEDs in a line, like an LED strip.
-        /// </summary>
-        Linear,
+    /// <summary>
+    /// This zone represents s sequence of LEDs in a line, like an LED strip.
+    /// </summary>
+    Linear,
 
-        /// <summary>
-        /// This zone represents a matrix of LEDs in a grid, like a keyboard.
-        /// </summary>
-        Matrix
-    }
+    /// <summary>
+    /// This zone represents a matrix of LEDs in a grid, like a keyboard.
+    /// </summary>
+    Matrix
 }

@@ -1,0 +1,70 @@
+﻿using System;
+using System.Buffers.Binary;
+using System.Text;
+
+namespace OpenRGB.NET.Utils;
+#if DEBUG
+[NonCopyable]
+#endif
+internal ref struct SpanReader
+{
+    public ReadOnlySpan<byte> Span { get; }
+    public int Position { get; private set; }
+
+    public SpanReader(in ReadOnlySpan<byte> span)
+    {
+        Span = span;
+        Position = 0;
+    }
+
+    public ReadOnlySpan<byte> PeekBytes(int length)
+    {
+        return Span[Position..(Position + length)];
+    }
+
+    public ushort ReadUInt16()
+    {
+        ushort value = BinaryPrimitives.ReadUInt16LittleEndian(Span[Position..]);
+        Position += sizeof(ushort);
+        return value;
+    }
+
+    public int ReadInt32()
+    {
+        int value = BinaryPrimitives.ReadInt32LittleEndian(Span[Position..]);
+        Position += sizeof(int);
+        return value;
+    }
+
+    public uint ReadUInt32()
+    {
+        uint value = BinaryPrimitives.ReadUInt32LittleEndian(Span[Position..]);
+        Position += sizeof(uint);
+        return value;
+    }
+
+    public ReadOnlySpan<byte> ReadBytes(int length)
+    {
+        ReadOnlySpan<byte> value = Span[Position..(Position + length)];
+        Position += length;
+        return value;
+    }
+
+    public byte ReadByte()
+    {
+        byte value = Span[Position];
+        Position += sizeof(byte);
+        return value;
+    }
+
+    public string ReadLengthAndString()
+    {
+        int length = ReadUInt16();
+        return Encoding.ASCII.GetString(ReadBytes(length)[..^1]);
+    }
+
+    public void Skip(int length)
+    {
+        Position += length;
+    }
+}

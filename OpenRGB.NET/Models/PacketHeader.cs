@@ -1,58 +1,55 @@
-﻿using System;
+using System;
 using System.Text;
+using OpenRGB.NET.Utils;
 
-namespace OpenRGB.NET.Models
+namespace OpenRGB.NET;
+
+/// <summary>
+/// Packet Header class containing the command ID and the length of the data to be sent.
+/// </summary>
+internal readonly struct PacketHeader
 {
-    /// <summary>
-    /// Packet Header class containing the command ID and the length of the data to be sent.
-    /// </summary>
-    internal struct PacketHeader
+    internal const int Length = 16;
+    private const string Magic = "ORGB";
+    private static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes(Magic);
+    internal uint DeviceId { get; }
+    internal uint Command { get; }
+    internal uint DataLength { get; }
+
+    internal PacketHeader(uint deviceId, uint command, uint length)
     {
-        internal const int Size = 16;
-        internal uint DeviceId { get; }
-        internal uint Command { get; }
-        internal uint DataLength { get; }
+        DeviceId = deviceId;
+        Command = command;
+        DataLength = length;
+    }
 
-        internal PacketHeader(uint deviceId, uint command, uint length)
-        {
-            DeviceId = deviceId;
-            Command = command;
-            DataLength = length;
-        }
+    internal byte[] ToArray()
+    {
+        byte[] array = new byte[Length];
+        Span<byte> span = array;
+        
+        MagicBytes.CopyTo(span);
+        BitConverter.TryWriteBytes(span[4..], DeviceId);
+        BitConverter.TryWriteBytes(span[8..], Command);
+        BitConverter.TryWriteBytes(span[12..], DataLength);
 
-        /// <summary>
-        /// Converts the packet into a byte array to send to the server.
-        /// </summary>
-        /// <returns></returns>
-        internal byte[] Encode()
-        {
-            var arr = new byte[Size];
+        return array;
+    }
 
-            Encoding.ASCII.GetBytes("ORGB").CopyTo(arr, 0);
-            BitConverter.GetBytes(DeviceId).CopyTo(arr, 4);
-            BitConverter.GetBytes(Command).CopyTo(arr, 8);
-            BitConverter.GetBytes(DataLength).CopyTo(arr, 12);
-
-            return arr;
-        }
-
-        /// <summary>
-        /// Decodes a byte array into a PacketHeader
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <returns></returns>
-        internal static PacketHeader Decode(byte[] buffer)
-        {
-            if (buffer.Length != Size)
-                throw new ArgumentException($"{nameof(buffer)} has length {buffer.Length}, should be {Size}");
-            if (Encoding.ASCII.GetString(buffer, 0, 4) != "ORGB")
-                throw new ArgumentException($"Magic bytes \"ORGB\" were not found. Data was {buffer}");
-
-            return new PacketHeader(
-                BitConverter.ToUInt32(buffer, 4),
-                BitConverter.ToUInt32(buffer, 8),
-                BitConverter.ToUInt32(buffer, 12)
-            );
-        }
+    internal static PacketHeader ReadFrom(ref SpanReader reader)
+    {
+        if (!reader.PeekBytes(4).SequenceEqual(MagicBytes))
+            throw new ArgumentException($"Magic bytes \"{Magic}\" were not found. Data was {reader.Span.ToArray()}");
+            
+        reader.Skip(4);
+        return new PacketHeader(reader.ReadUInt32(), reader.ReadUInt32(), reader.ReadUInt32());
+    }
+    
+    internal void WriteTo(ref SpanWriter writer)
+    {
+        writer.WriteBytes(MagicBytes);
+        writer.WriteUInt32(DeviceId);
+        writer.WriteUInt32(Command);
+        writer.WriteUInt32(DataLength);
     }
 }

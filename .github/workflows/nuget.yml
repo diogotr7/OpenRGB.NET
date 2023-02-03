@@ -1,0 +1,25 @@
+name: Publish Nuget package
+
+on: 
+  push:
+    branches:
+      - master
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Clone
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: dotnet build -c Release src/OpenRGB.NET/OpenRGB.NET.csproj
+
+      - name: Upload
+        run: dotnet nuget push src/OpenRGB.NET/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

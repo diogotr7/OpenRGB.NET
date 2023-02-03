@@ -7,42 +7,48 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Segment
 {
+    private Segment(int index, string name, ZoneType type, uint start, uint ledCount)
+    {
+        Index = index;
+        Name = name;
+        Type = type;
+        Start = start;
+        LedCount = ledCount;
+    }
+
     /// <summary>
     ///  The index of the segment.
     /// </summary>
-    public int Index { get; private set; }
+    public int Index { get; }
     
     /// <summary>
     ///     The name of the segment chosen by the user.
     /// </summary>
-    public string Name { get; private set; }
+    public string Name { get; }
 
     /// <summary>
     ///     The type of the zone the segment is part of.
     /// </summary>
-    public ZoneType Type { get; private set; }
+    public ZoneType Type { get; }
 
     /// <summary>
     ///     The index of the first LED in the segment.
     /// </summary>
-    public uint Start { get; private set; }
+    public uint Start { get; }
 
     /// <summary>
     ///     The number of LEDs in the segment.
     /// </summary>
-    public uint LedCount { get; private set; }
+    public uint LedCount { get; }
 
-    internal static Segment ReadFrom(ref SpanReader reader, int index)
+    private static Segment ReadFrom(ref SpanReader reader, int index)
     {
-        var segment = new Segment();
+        var name = reader.ReadLengthAndString();
+        var type = (ZoneType)reader.ReadUInt32();
+        var start = reader.ReadUInt32();
+        var ledCount = reader.ReadUInt32();
 
-        segment.Index = index;
-        segment.Name = reader.ReadLengthAndString();
-        segment.Type = (ZoneType)reader.ReadUInt32();
-        segment.Start = reader.ReadUInt32();
-        segment.LedCount = reader.ReadUInt32();
-
-        return segment;
+        return new Segment(index, name, type, start, ledCount);
     }
 
     internal static Segment[] ReadManyFrom(ref SpanReader reader, ushort segmentCount)

@@ -1,4 +1,5 @@
-﻿using OpenRGB.NET.Utils;
+using System;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
@@ -7,82 +8,83 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Zone
 {
+    private Zone(IOpenRgbClient client, int index, int deviceIndex, string name, ZoneType type, uint ledCount, uint ledsMin, uint ledsMax, MatrixMap? matrixMap, Segment[] segments)
+    {
+        Client = client;
+        Index = index;
+        DeviceIndex = deviceIndex;
+        Name = name;
+        Type = type;
+        LedCount = ledCount;
+        LedsMin = ledsMin;
+        LedsMax = ledsMax;
+        MatrixMap = matrixMap;
+        Segments = segments;
+    }
+
     /// <summary>
     ///     The owning OpenRGBClient of the device.
     /// </summary>
-    public IOpenRgbClient Client { get; private set; }
+    public IOpenRgbClient Client { get; }
 
     /// <summary>
     ///     The index of the zone.
     /// </summary>
-    public int Index { get; private set; }
+    public int Index { get; }
 
     /// <summary>
     ///     The index of the zone's parent device
     /// </summary>
-    public int DeviceIndex { get; private set; }
+    public int DeviceIndex { get; }
 
     /// <summary>
     ///     The name of the zone.
     /// </summary>
-    public string Name { get; private set; }
+    public string Name { get; }
 
     /// <summary>
     ///     The type of the zone.
     /// </summary>
-    public ZoneType Type { get; private set; }
+    public ZoneType Type { get; }
 
     /// <summary>
     ///     How many leds the zone has.
     /// </summary>
-    public uint LedCount { get; private set; }
+    public uint LedCount { get; }
 
     /// <summary>
     ///     Minimum number of leds in the zone
     /// </summary>
-    public uint LedsMin { get; private set; }
+    public uint LedsMin { get; }
 
     /// <summary>
     ///     Maximum number of leds in the zone
     /// </summary>
-    public uint LedsMax { get; private set; }
+    public uint LedsMax { get; }
 
     /// <summary>
     ///     A 2d Matrix containing the LED positions on the zone. Will be null if ZoneType is not ZoneType.MatrixMap
     /// </summary>
-    public MatrixMap MatrixMap { get; private set; }
+    public MatrixMap? MatrixMap { get; }
 
     /// <summary>
     ///     A list of segments in the zone. Will be null if protocol version is below 4.
     /// </summary>
-    public Segment[] Segments { get; private set; }
+    public Segment[] Segments { get; }
 
-    internal static Zone ReadFrom(ref SpanReader reader, int deviceIndex, int zoneIndex, IOpenRgbClient client,
+    private static Zone ReadFrom(ref SpanReader reader, int deviceIndex, int zoneIndex, IOpenRgbClient client,
         ProtocolVersion protocolVersion)
     {
-        var zone = new Zone
-        {
-            Client = client,
-            DeviceIndex = deviceIndex,
-            Index = zoneIndex,
-            Name = reader.ReadLengthAndString(),
-            Type = (ZoneType)reader.ReadUInt32(),
-            LedsMin = reader.ReadUInt32(),
-            LedsMax = reader.ReadUInt32(),
-            LedCount = reader.ReadUInt32()
-        };
-
+        var name = reader.ReadLengthAndString();
+        var type = (ZoneType)reader.ReadUInt32();
+        var ledsMin = reader.ReadUInt32();
+        var ledsMax = reader.ReadUInt32();
+        var ledCount = reader.ReadUInt32();
         var zoneMatrixLength = reader.ReadUInt16();
+        var matrixMap = zoneMatrixLength > 0 ? MatrixMap.ReadFrom(ref reader) : null;
+        var segments = protocolVersion.SupportsSegments ? Segment.ReadManyFrom(ref reader, reader.ReadUInt16()) : Array.Empty<Segment>();
 
-        zone.MatrixMap = zoneMatrixLength > 0 ? MatrixMap.ReadFrom(ref reader) : null;
-
-        if (protocolVersion.SupportsSegments)
-        {
-            var segmentCount = reader.ReadUInt16();
-            zone.Segments = Segment.ReadManyFrom(ref reader, segmentCount);
-        }
-
-        return zone;
+        return new Zone(client, zoneIndex, deviceIndex, name, type, ledCount, ledsMin, ledsMax, matrixMap, segments);
     }
 
     internal static Zone[] ReadManyFrom(ref SpanReader reader, ushort zoneCount, IOpenRgbClient client, int deviceID,

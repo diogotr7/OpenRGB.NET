@@ -7,29 +7,34 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Led
 {
+    private Led(int index, string name, uint value)
+    {
+        Index = index;
+        Name = name;
+        Value = value;
+    }
+
     /// <summary>
     ///   The index of the led.
     /// </summary>
-    public int Index { get; private init; }
+    public int Index { get; }
     
     /// <summary>
     ///     The name of the led.
     /// </summary>
-    public string Name { get; private init; }
+    public string Name { get; }
 
     /// <summary>
     ///     Device specific led value. Most likely not useful for the clients.
     /// </summary>
-    public uint Value { get; private init; }
+    public uint Value { get;  }
 
     private static Led ReadFrom(ref SpanReader reader, int index)
     {
-        return new Led
-        {
-            Index = index,
-            Name = reader.ReadLengthAndString(),
-            Value = reader.ReadUInt32()
-        };
+        var name = reader.ReadLengthAndString();
+        var value = reader.ReadUInt32();
+        
+        return new Led(index, name, value);
     }
 
     /// <summary>

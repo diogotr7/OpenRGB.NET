@@ -1,4 +1,4 @@
-﻿using OpenRGB.NET.Utils;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
@@ -7,20 +7,27 @@ namespace OpenRGB.NET;
 /// </summary>
 public class MatrixMap
 {
+    private MatrixMap(uint height, uint width, uint[,] matrix)
+    {
+        Height = height;
+        Width = width;
+        Matrix = matrix;
+    }
+
     /// <summary>
     ///     The height of the matrix.
     /// </summary>
-    public uint Height { get; private init; }
+    public uint Height { get; }
 
     /// <summary>
     ///     The width of the matrix.
     /// </summary>
-    public uint Width { get; private init; }
+    public uint Width { get; }
 
     /// <summary>
     ///     The matrix.
     /// </summary>
-    public uint[,] Matrix { get; private init; }
+    public uint[,] Matrix { get; }
 
     internal uint Length => Height * Width * 4 + 8;
 
@@ -40,12 +47,7 @@ public class MatrixMap
         for (var j = 0; j < width; j++)
             matrix[i, j] = reader.ReadUInt32();
 
-        return new MatrixMap
-        {
-            Height = height,
-            Width = width,
-            Matrix = matrix
-        };
+        return new MatrixMap(height, width, matrix);
     }
 
     internal void WriteTo(ref SpanWriter writer)

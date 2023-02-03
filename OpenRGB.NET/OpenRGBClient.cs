@@ -36,7 +36,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     public uint CommonProtocolVersion { get; private set; }
 
     /// <inheritdoc />
-    public event EventHandler<EventArgs> DeviceListUpdated;
+    public event EventHandler<EventArgs>? DeviceListUpdated;
 
     #region Basic init methods
 
@@ -365,7 +365,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     public void SetMode(int deviceId, int modeId,
         uint? speed = null,
         Direction? direction = null,
-        Color[] colors = null)
+        Color[]? colors = null)
     {
         var targetDevice = GetControllerData(deviceId);
 

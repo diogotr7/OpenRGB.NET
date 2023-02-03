@@ -8,60 +8,83 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Mode
 {
+    private Mode(ProtocolVersion protocolVersion, int index, string name, int value, ModeFlags flags, uint speedMin,
+        uint speedMax, uint brightnessMin, uint brightnessMax, uint colorMin, uint colorMax, uint speed, 
+        uint brightness, Direction direction, ColorMode colorMode, Color[] colors)
+    {
+        //TODO: don't fill in unused values since OpenRGB sends uninitialized memory for them.
+        ProtocolVersion = protocolVersion;
+        Index = index;
+        Name = name;
+        Value = value;
+        Flags = flags;
+        SpeedMin = speedMin;
+        SpeedMax = speedMax;
+        BrightnessMin = brightnessMin;
+        BrightnessMax = brightnessMax;
+        ColorMin = colorMin;
+        ColorMax = colorMax;
+        Speed = speed;
+        Brightness = brightness;
+        Direction = direction;
+        ColorMode = colorMode;
+        Colors = colors;
+    }
+
     /// <summary>
     ///     The version the mode was decoded in.
     /// </summary>
-    public ProtocolVersion ProtocolVersion { get; private init; }
+    public ProtocolVersion ProtocolVersion { get; }
 
     /// <summary>
     ///   The index of the mode.
     /// </summary>
-    public int Index { get; private init; }
+    public int Index { get; }
 
     /// <summary>
     ///     The name of the mode.
     /// </summary>
-    public string Name { get; private init; }
+    public string Name { get; }
 
     /// <summary>
     ///     Device specific value for this mode. Most likely not useful for the client.
     /// </summary>
-    public int Value { get; private init; }
+    public int Value { get; }
 
     /// <summary>
     ///     Flags containing the features this mode supports.
     /// </summary>
-    public ModeFlags Flags { get; private init; }
+    public ModeFlags Flags { get; }
 
     /// <summary>
     ///     The minimum speed value this mode supports.
     /// </summary>
-    public uint SpeedMin { get; private init; }
+    public uint SpeedMin { get; }
 
     /// <summary>
     ///     The maximum speed value this mode supports.
     /// </summary>
-    public uint SpeedMax { get; private init; }
+    public uint SpeedMax { get; }
 
     /// <summary>
     ///     The minimum brightness value this mode supports.
     /// </summary>
-    public uint BrightnessMin { get; private init; }
+    public uint BrightnessMin { get; }
 
     /// <summary>
     ///     The maximum brightness value this mode supports.
     /// </summary>
-    public uint BrightnessMax { get; private init; }
+    public uint BrightnessMax { get; }
 
     /// <summary>
     ///     The minimum number of colors this mode supports.
     /// </summary>
-    public uint ColorMin { get; private init; }
+    public uint ColorMin { get; }
 
     /// <summary>
     ///     The maximum number of colors this mode supports.
     /// </summary>
-    public uint ColorMax { get; private init; }
+    public uint ColorMax { get; }
 
     /// <summary>
     ///     The current speed value of this mode.
@@ -81,7 +104,7 @@ public class Mode
     /// <summary>
     ///     Mode representing how the Colors are used for effects.
     /// </summary>
-    public ColorMode ColorMode { get; private init; }
+    public ColorMode ColorMode { get; }
 
     /// <summary>
     ///     The colors this mode uses for lighting.
@@ -155,29 +178,9 @@ public class Mode
         var colorCount = reader.ReadUInt16();
         var colors = Color.ReadManyFrom(ref reader, colorCount);
 
-        return new Mode()
-        {
-            ProtocolVersion = protocolVersion,
-            Index = index,
-            Name = name,
-            Value = modeValue,
-            Flags = modeFlags,
-            SpeedMin = modeFlags.HasFlag(ModeFlags.HasSpeed) ? speedMin : 0,
-            SpeedMax = modeFlags.HasFlag(ModeFlags.HasSpeed) ? speedMax : 0,
-            BrightnessMin = modeFlags.HasFlag(ModeFlags.HasBrightness) ? brightMin : 0,
-            BrightnessMax = modeFlags.HasFlag(ModeFlags.HasBrightness) ? brightMax : 0,
-            ColorMin = modeFlags.HasFlag(ModeFlags.HasModeSpecificColor) ? colorMin : 0,
-            ColorMax = modeFlags.HasFlag(ModeFlags.HasModeSpecificColor) ? colorMax : 0,
-            Speed = modeFlags.HasFlag(ModeFlags.HasSpeed) ? speed : 0,
-            Brightness = modeFlags.HasFlag(ModeFlags.HasBrightness) ? brightness : 0,
-            Direction = modeFlags.HasFlag(ModeFlags.HasDirectionHV)
-                        || modeFlags.HasFlag(ModeFlags.HasDirectionLR)
-                        || modeFlags.HasFlag(ModeFlags.HasDirectionUD)
-                ? (Direction)direction
-                : Direction.None,
-            ColorMode = colorMode,
-            Colors = colors
-        };
+        return new Mode(protocolVersion, index, name, modeValue, modeFlags, speedMin, speedMax,
+            brightMin, brightMax, colorMin, colorMax, speed, brightness,
+            (Direction)direction, colorMode, colors);
     }
 
     internal static Mode[] ReadManyFrom(ref SpanReader reader, ushort numModes, ProtocolVersion protocolVersion)

@@ -97,7 +97,7 @@ public interface IOpenRgbClient
     /// <param name="speed"></param>
     /// <param name="direction"></param>
     /// <param name="colors"></param>
-    void SetMode(int deviceId, int modeId, uint? speed = null, Direction? direction = null, Color[] colors = null);
+    void SetMode(int deviceId, int modeId, uint? speed = null, Direction? direction = null, Color[]? colors = null);
 
     /// <summary>
     ///     Updates the LEDs for the given device.

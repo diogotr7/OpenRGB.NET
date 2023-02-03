@@ -21,7 +21,7 @@ jobs:
       - name: Clone
         uses: actions/checkout@v2
 
-      - name: Pack
+      - name: Build
         run: dotnet build -c Release src/OpenRGB.NET/OpenRGB.NET.csproj
 
       - name: Upload

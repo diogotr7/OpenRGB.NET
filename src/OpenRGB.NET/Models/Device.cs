@@ -8,11 +8,10 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Device
 {
-    private Device(IOpenRgbClient client, int index, DeviceType type, string name, string? vendor,
+    private Device(int index, DeviceType type, string name, string? vendor,
         string description, string version, string serial, string location, int activeModeIndex,
         Mode[] modes, Zone[] zones, Led[] leds, Color[] colors)
     {
-        Client = client;
         Index = index;
         Type = type;
         Name = name;
@@ -27,11 +26,6 @@ public class Device
         Leds = leds;
         Colors = colors;
     }
-
-    /// <summary>
-    ///     The owning OpenRGBClient of the device.
-    /// </summary>
-    public IOpenRgbClient Client { get; }
 
     /// <summary>
     ///     The index of the device.
@@ -103,7 +97,7 @@ public class Device
     /// </summary>
     public Mode ActiveMode => Modes[ActiveModeIndex];
 
-    internal static Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, int deviceIndex, IOpenRgbClient client)
+    internal static Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, int deviceIndex)
     {
         var duplicatePacketLength = reader.ReadUInt32();
 
@@ -118,23 +112,15 @@ public class Device
         var activeMode = reader.ReadInt32();
         var modes = Mode.ReadManyFrom(ref reader, modeCount, protocol);
         var zoneCount = reader.ReadUInt16();
-        var zones = Zone.ReadManyFrom(ref reader, zoneCount, client, deviceIndex, protocol);
+        var zones = Zone.ReadManyFrom(ref reader, zoneCount, deviceIndex, protocol);
         var ledCount = reader.ReadUInt16();
         var leds = Led.ReadManyFrom(ref reader, ledCount);
         var colorCount = reader.ReadUInt16();
         var colors = Color.ReadManyFrom(ref reader, colorCount);
 
-        return new Device(client, deviceIndex, (DeviceType)deviceType,
+        return new Device(deviceIndex, (DeviceType)deviceType,
             name, vendor, description, version, serial, location,
             activeMode, modes, zones, leds, colors);
-    }
-
-    /// <summary>
-    ///     Calls UpdateLeds(ID, colors) on the owning client.
-    /// </summary>
-    public void Update(Color[] colors)
-    {
-        Client.UpdateLeds(Index, colors);
     }
 
     /// <inheritdoc />

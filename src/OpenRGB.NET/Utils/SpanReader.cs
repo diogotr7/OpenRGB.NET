@@ -17,11 +17,6 @@ internal ref struct SpanReader
         Position = 0;
     }
 
-    public ReadOnlySpan<byte> PeekBytes(int length)
-    {
-        return Span[Position..(Position + length)];
-    }
-
     public ushort ReadUInt16()
     {
         var value = BinaryPrimitives.ReadUInt16LittleEndian(Span[Position..]);
@@ -61,10 +56,5 @@ internal ref struct SpanReader
     {
         int length = ReadUInt16();
         return Encoding.ASCII.GetString(ReadBytes(length)[..^1]);
-    }
-
-    public void Skip(int length)
-    {
-        Position += length;
     }
 }

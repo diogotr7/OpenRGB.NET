@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 
 namespace OpenRGB.NET.Utils;
 
@@ -7,13 +8,9 @@ namespace OpenRGB.NET.Utils;
 /// </summary>
 internal static class PacketFactory
 {
-    internal static uint ResizeZoneLength()
-    {
-        //4 uint zone_index
-        //4 uint new_zone_size
-
-        return 4 + 4;
-    }
+    //4 uint zone_index
+    //4 uint new_zone_size
+    internal const int ResizeZoneLength = 4 + 4;
 
     internal static void ResizeZone(ref SpanWriter writer, uint zoneIndex, uint newZoneSize)
     {
@@ -64,13 +61,9 @@ internal static class PacketFactory
             colors[i].WriteTo(ref writer);
     }
 
-    internal static uint UpdateSingleLedLength()
-    {
-        //4 uint led_index
-        //4 color color
-
-        return 4 + 4;
-    }
+    //4 uint led_index
+    //4 color color
+    internal const int UpdateSingleLedLength = 4 + 4;
 
     internal static void UpdateSingleLed(ref SpanWriter writer, uint ledIndex, in Color color)
     {

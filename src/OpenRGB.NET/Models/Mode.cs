@@ -12,21 +12,20 @@ public class Mode
         uint speedMax, uint brightnessMin, uint brightnessMax, uint colorMin, uint colorMax, uint speed, 
         uint brightness, Direction direction, ColorMode colorMode, Color[] colors)
     {
-        //TODO: don't fill in unused values since OpenRGB sends uninitialized memory for them.
         ProtocolVersion = protocolVersion;
         Index = index;
         Name = name;
         Value = value;
         Flags = flags;
-        SpeedMin = speedMin;
-        SpeedMax = speedMax;
-        BrightnessMin = brightnessMin;
-        BrightnessMax = brightnessMax;
-        ColorMin = colorMin;
-        ColorMax = colorMax;
+        SpeedMin = SupportsSpeed ? speedMin : 0;
+        SpeedMax = SupportsSpeed ? speedMax : 0;
+        BrightnessMin = SupportsBrightness ? brightnessMin : 0;
+        BrightnessMax = SupportsBrightness ? brightnessMax : 0;
+        ColorMin = Flags.HasFlag(ModeFlags.HasModeSpecificColor) ? colorMin : 0;
+        ColorMax = Flags.HasFlag(ModeFlags.HasModeSpecificColor) ? colorMax : 0;
         Speed = speed;
         Brightness = brightness;
-        Direction = direction;
+        Direction = SupportsDirection ? direction : Direction.None;
         ColorMode = colorMode;
         Colors = colors;
     }
@@ -110,21 +109,28 @@ public class Mode
     ///     The colors this mode uses for lighting.
     /// </summary>
     public Color[] Colors { get; private set; }
-
+    
     /// <summary>
-    ///     Determines if the feature is supported in the flags.
+    ///     Whether this mode supports speed.
     /// </summary>
-    public bool HasFlag(ModeFlags flag)
-    {
-        return (Flags & flag) != 0;
-    }
+    public bool SupportsSpeed => Flags.HasFlag(ModeFlags.HasSpeed);
+    
+    /// <summary>
+    ///     Whether this mode supports brightness.
+    /// </summary>
+    public bool SupportsBrightness => Flags.HasFlag(ModeFlags.HasBrightness);
+    
+    /// <summary>
+    ///     Whether this mode supports direction.
+    /// </summary>
+    public bool SupportsDirection => Flags.HasFlag(ModeFlags.HasDirectionHV) || Flags.HasFlag(ModeFlags.HasDirectionUD) || Flags.HasFlag(ModeFlags.HasDirectionLR);
 
     /// <summary>
     ///   Sets the speed of the mode.
     /// </summary>
     public void SetSpeed(uint newSpeed)
     {
-        if (!HasFlag(ModeFlags.HasSpeed))
+        if (!SupportsSpeed)
             throw new InvalidOperationException("This mode does not support speed.");
            
         Speed = newSpeed;
@@ -135,7 +141,7 @@ public class Mode
     /// </summary>
     public void SetBrightness(uint newBrightness)
     {
-        if (!HasFlag(ModeFlags.HasBrightness))
+        if (!SupportsBrightness)
             throw new InvalidOperationException("This mode does not support brightness.");
         
         Brightness = newBrightness;
@@ -146,7 +152,7 @@ public class Mode
     /// </summary>
     public void SetDirection(Direction newDirection)
     {
-        if (!HasFlag(ModeFlags.HasDirectionHV) && !HasFlag(ModeFlags.HasDirectionUD) && !HasFlag(ModeFlags.HasDirectionLR))
+        if (!SupportsDirection)
             throw new InvalidOperationException("This mode does not support direction.");
         
         Direction = newDirection;

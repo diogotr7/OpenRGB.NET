@@ -52,9 +52,4 @@ public enum ModeFlags
     ///     This Mode has a random color option.
     /// </summary>
     HasRandomColor = 1 << 7,
-
-    /// <summary>
-    ///     This mode has a direction parameter in any orientation.
-    /// </summary>
-    HasDirection = HasDirectionLR & HasDirectionUD & HasDirectionHV
 }

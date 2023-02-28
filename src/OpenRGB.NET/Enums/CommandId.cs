@@ -49,6 +49,16 @@ public enum CommandId
     ///     Delete a given profile.
     /// </summary>
     DeleteProfile = 153,
+    
+    /// <summary>
+    ///     Request list of plugins from the server.
+    /// </summary>
+    RequestPlugins = 200,
+    
+    /// <summary>
+    ///     Interact with a plugin installed on the server.
+    /// </summary>
+    PluginSpecific = 201,
 
     /// <summary>
     ///     Calls RGBController::ResizeZone() on the server. Not implemented.
@@ -78,5 +88,10 @@ public enum CommandId
     /// <summary>
     ///     Calls RGBController::UpdateMode() on the server.
     /// </summary>
-    UpdateMode = 1101
+    UpdateMode = 1101,
+    
+    /// <summary>
+    ///     Calls RGBController::SaveMode() on the server.
+    /// </summary>
+    SaveMode = 1102
 }

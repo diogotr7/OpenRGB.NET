@@ -22,6 +22,9 @@ public static class ColorUtils
             throw new ArgumentOutOfRangeException(nameof(saturation));
         if (value is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(value));
+        
+        while (hue < 0) { hue += 360; }
+        while (hue >= 360) { hue -= 360; }
 
         var hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
         var f = hue / 60 - Math.Floor(hue / 60);

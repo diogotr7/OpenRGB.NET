@@ -1,4 +1,5 @@
-﻿using OpenRGB.NET.Utils;
+﻿using System;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
@@ -8,7 +9,7 @@ namespace OpenRGB.NET;
 /// <param name="R">The Red component</param>
 /// <param name="G">The Green component</param>
 /// <param name="B">The Blue component</param>
-public record struct Color(byte R, byte G, byte B)
+public readonly record struct Color(byte R, byte G, byte B)
 {
     /// <summary>
     ///     Constructs a default Color struct, set to (0,0,0).
@@ -44,6 +45,12 @@ public record struct Color(byte R, byte G, byte B)
 
     internal static Color[] ReadManyFrom(ref SpanReader reader, int count)
     {
+        if (count < 0)
+            throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than or equal to 0.");
+
+        if (count == 0)
+            return Array.Empty<Color>();
+        
         var colors = new Color[count];
 
         for (var i = 0; i < count; i++)

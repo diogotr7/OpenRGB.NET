@@ -11,7 +11,7 @@ internal ref struct SpanWriter
 {
     public Span<byte> Span { get; }
     public int Position { get; private set; }
-
+    
     public SpanWriter(in Span<byte> span)
     {
         Span = span;

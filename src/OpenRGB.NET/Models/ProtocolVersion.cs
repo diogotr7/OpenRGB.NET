@@ -9,13 +9,13 @@ public readonly struct ProtocolVersion
 {
     private ProtocolVersion(uint number,
         bool supportsVendorString, bool supportsProfileControls,
-        bool supportsBrightnessAndSaveMode, bool supportsSegments)
+        bool supportsBrightnessAndSaveMode, bool supportsSegmentsAndPlugins)
     {
         Number = number;
         SupportsVendorString = supportsVendorString;
         SupportsProfileControls = supportsProfileControls;
         SupportsBrightnessAndSaveMode = supportsBrightnessAndSaveMode;
-        SupportsSegments = supportsSegments;
+        SupportsSegmentsAndPlugins = supportsSegmentsAndPlugins;
     }
 
     /// <summary>
@@ -41,7 +41,12 @@ public readonly struct ProtocolVersion
     /// <summary>
     ///     Whether the protocol version supports segments
     /// </summary>
-    public bool SupportsSegments { get; }
+    public bool SupportsSegmentsAndPlugins { get; }
+    
+    /// <summary>
+    ///     The invalid protocol version.
+    /// </summary>
+    public static readonly ProtocolVersion Invalid = new(0, false, false, false, false);
 
     /// <summary>
     ///     The protocol version 0, the initial release.

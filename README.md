@@ -8,18 +8,5 @@ Tested on Windows 10 and Arch Linux.
 You can simply add the nuget package as a reference to your project.
 
 # Usage example
-## Setting every led to red
-```cs
-using var client = new OpenRGBClient(name: "My OpenRGB Client", autoconnect: true, timeout: 1000);
 
-var deviceCount = client.GetControllerCount();
-var devices = client.GetAllControllerData();
-
-for (int i = 0; i < devices.Length; i++)
-{
-    var leds = Enumerable.Range(0, devices[i].Colors.Length)
-        .Select(_ => new Color(255, 0, 0))
-        .ToArray();
-    client.UpdateLeds(i, leds);
-}
-```
+See the [example project](src/OpenRGB.NET.Example/Program.cs).

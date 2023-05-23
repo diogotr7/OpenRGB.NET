@@ -201,6 +201,8 @@ public class Mode
 
     internal void WriteTo(ref SpanWriter writer)
     {
+        writer.WriteInt32(0);   //move 4 bytes
+        writer.WriteInt32(Index);
         writer.WriteLengthAndString(Name);
         writer.WriteInt32(Value);
         writer.WriteUInt32((uint)Flags);

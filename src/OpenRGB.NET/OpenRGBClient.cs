@@ -239,9 +239,9 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
     private byte[] SendPluginSpecificData(int pluginIndex, ReadOnlySpan<byte> data)
     {
-        //TODO
         return Array.Empty<byte>();
-        return SendMessageAndGetResponse(CommandId.PluginSpecific, data, (uint)pluginIndex);
+        //TODO
+        //return SendMessageAndGetResponse(CommandId.PluginSpecific, data, (uint)pluginIndex);
     }
 
     private uint GetServerProtocolVersion()

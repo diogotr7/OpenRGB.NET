@@ -239,9 +239,9 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
     private byte[] SendPluginSpecificData(int pluginIndex, ReadOnlySpan<byte> data)
     {
-        //TODO
         return Array.Empty<byte>();
-        return SendMessageAndGetResponse(CommandId.PluginSpecific, data, (uint)pluginIndex);
+        //TODO
+        //return SendMessageAndGetResponse(CommandId.PluginSpecific, data, (uint)pluginIndex);
     }
 
     private uint GetServerProtocolVersion()
@@ -249,12 +249,13 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         uint serverVersion;
 
         _socket.ReceiveTimeout = 1000;
+        
+        Span<byte> buffer = stackalloc byte[4];
+        var writer = new SpanWriter(buffer);
+        writer.WriteUInt32(ClientProtocolVersion.Number);
+        
         try
         {
-            Span<byte> buffer = stackalloc byte[4];
-            var writer = new SpanWriter(buffer);
-            writer.WriteUInt32(ClientProtocolVersion.Number);
-            
             var response = SendMessageAndGetResponse(CommandId.RequestProtocolVersion,buffer);
             serverVersion = BitConverter.ToUInt32(response);
         }
@@ -289,13 +290,13 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var packetLength = (int)PacketFactory.UpdateLedsLength(colors.Length);
         var rent = ArrayPool<byte>.Shared.Rent(packetLength);
+        var packet = rent.AsSpan(0, packetLength);
+        var writer = new SpanWriter(packet);
+
+        PacketFactory.UpdateLeds(ref writer, in colors);
+
         try
         {
-            var packet = rent.AsSpan(0, packetLength);
-            var writer = new SpanWriter(packet);
-
-            PacketFactory.UpdateLeds(ref writer, in colors);
-
             SendMessage(CommandId.UpdateLeds, packet, (uint)deviceId);
         }
         finally
@@ -318,13 +319,13 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var packetLength = (int)PacketFactory.UpdateZoneLedsLength(colors.Length);
         var rent = ArrayPool<byte>.Shared.Rent(packetLength);
+        var packet = rent.AsSpan(0, packetLength);
+        var writer = new SpanWriter(packet);
+
+        PacketFactory.UpdateZoneLeds(ref writer, (uint)zoneId, colors);
+        
         try
         {
-            var packet = rent.AsSpan(0, packetLength);
-            var writer = new SpanWriter(packet);
-
-            PacketFactory.UpdateZoneLeds(ref writer, (uint)zoneId, colors);
-
             SendMessage(CommandId.UpdateZoneLeds, packet, (uint)deviceId);
         }
         finally
@@ -338,6 +339,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     {
         Span<byte> packet = stackalloc byte[PacketFactory.UpdateSingleLedLength];
         var writer = new SpanWriter(packet);
+        
         PacketFactory.UpdateSingleLed(ref writer, (uint)ledId, in color);
 
         SendMessage(CommandId.UpdateSingleLed, packet, (uint)deviceId);
@@ -415,13 +417,13 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var packetLength = (int)targetMode.GetLength();
         var rent = ArrayPool<byte>.Shared.Rent(packetLength);
+        var packet = rent.AsSpan(0, packetLength);
+        var writer = new SpanWriter(packet);
+            
+        PacketFactory.UpdateMode(ref writer, targetMode, (uint)modeId);
+        
         try
         {
-            var packet = rent.AsSpan(0, packetLength);
-            var writer = new SpanWriter(packet);
-
-            targetMode.WriteTo(ref writer);
-
             SendMessage(CommandId.UpdateMode, packet, (uint)deviceId);
         }
         finally
@@ -442,13 +444,13 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         
         var packetLength = (int)targetMode.GetLength();
         var rent = ArrayPool<byte>.Shared.Rent(packetLength);
+        var packet = rent.AsSpan(0, packetLength);
+        var writer = new SpanWriter(packet);
+
+        PacketFactory.UpdateMode(ref writer, targetMode, (uint)modeId);
+        
         try
         {
-            var packet = rent.AsSpan(0, packetLength);
-            var writer = new SpanWriter(packet);
-
-            targetMode.WriteTo(ref writer);
-
             SendMessage(CommandId.SaveMode, packet, (uint)deviceId);
         }
         finally

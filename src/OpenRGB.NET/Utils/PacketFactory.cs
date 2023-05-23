@@ -71,18 +71,18 @@ internal static class PacketFactory
         color.WriteTo(ref writer);
     }
 
-    internal static uint UpdateModeLength(uint modeLength)
+    internal static uint UpdateModeLength(Mode mode)
     {
         //4 uint length
         //4 uint mode_index
         //x mode data
 
-        return 4 + 4 + modeLength;
+        return 4 + 4 + mode.GetLength();
     }
 
     internal static void UpdateMode(ref SpanWriter writer, Mode mode, uint modeIndex)
     {
-        var length = UpdateModeLength(mode.GetLength());
+        var length = UpdateModeLength(mode);
 
         writer.WriteUInt32(length);
         writer.WriteUInt32(modeIndex);

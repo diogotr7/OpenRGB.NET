@@ -8,7 +8,11 @@ using var client = new OpenRgbClient();
 client.Connect();
 Console.WriteLine("Connected to OpenRGB");
 
+var plugins = client.GetPlugins();
+
 var devices = client.GetAllControllerData();
+
+var profiles = client.GetProfiles();
 
 Console.WriteLine("Found devices:");
 foreach (var device in devices)

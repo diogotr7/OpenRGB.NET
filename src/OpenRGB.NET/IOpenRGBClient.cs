@@ -144,4 +144,12 @@ public interface IOpenRgbClient
     /// <param name="deviceId">The id of the device to update</param>
     /// <param name="modeId">The id of the mode on the device to update</param>
     void SaveMode(int deviceId, int modeId);
+
+    /// <summary>
+    ///     Sends plugin-specific data to the server.
+    /// </summary>
+    /// <param name="pluginId">The id of the plugin to send the data to</param>
+    /// <param name="pluginPacketType">The type of data to send to the plugin</param>
+    /// <param name="data">The data sent to the plugin</param>
+    void PluginSpecific(int pluginId, int pluginPacketType, ReadOnlySpan<byte> data);
 }

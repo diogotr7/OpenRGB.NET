@@ -14,7 +14,10 @@ internal static class PacketFactory
     internal const int ResizeZoneLength = 4 + 4;
     internal static void WriteResizeZone(Span<byte> packet, uint deviceId, uint zoneIndex, uint newZoneSize)
     {
-        Debug.Assert(packet.Length == PacketHeader.Length + ResizeZoneLength);
+        const int LENGTH = PacketHeader.Length + ResizeZoneLength;
+        
+        if (packet.Length != LENGTH)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {LENGTH}");
         
         var writer = new SpanWriter(packet);
         var header = new PacketHeader(deviceId, CommandId.ResizeZone, ResizeZoneLength);
@@ -38,7 +41,8 @@ internal static class PacketFactory
         var dataLength = GetUpdateLedsLength(colors.Length);
         var length = PacketHeader.Length + dataLength;
 
-        Debug.Assert(packet.Length == length);
+        if (packet.Length != length)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {length}");
         
         var writer = new SpanWriter(packet);
         var header = new PacketHeader((uint)deviceId, CommandId.UpdateLeds, (uint)dataLength);
@@ -66,7 +70,8 @@ internal static class PacketFactory
         var dataLength = GetUpdateZoneLedsLength(colors.Length);
         var length = PacketHeader.Length + dataLength;
 
-        Debug.Assert(packet.Length == length);
+        if (packet.Length != length)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {length}");
 
         var writer = new SpanWriter(packet);
         var header = new PacketHeader(deviceId, CommandId.UpdateZoneLeds, (uint)dataLength);
@@ -86,7 +91,9 @@ internal static class PacketFactory
     internal const int UpdateSingleLedLength = 4 + 4;
     internal static void WriteUpdateSingleLed(Span<byte> packet, uint deviceId, uint ledIndex, Color color)
     {
-        Debug.Assert(packet.Length == PacketHeader.Length + UpdateSingleLedLength);
+        const int LENGTH = PacketHeader.Length + UpdateSingleLedLength;
+        if (packet.Length != LENGTH)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {LENGTH}");
         
         var writer = new SpanWriter(packet);
         var header = new PacketHeader(deviceId, CommandId.UpdateSingleLed, UpdateSingleLedLength);
@@ -104,6 +111,10 @@ internal static class PacketFactory
     internal static void WriteStringOperation(Span<byte> packet, string someString, CommandId operation)
     {
         var dataLength = GetStringOperationLength(someString);
+        var length = PacketHeader.Length + dataLength;
+        
+        if (packet.Length != length)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {length}");
 
         //allocation is fine here, this is not a performance critical path.
         //TODO: when porting to .NET 8 use Encoding.ASCII.TryGetBytes to avoid allocation
@@ -129,8 +140,9 @@ internal static class PacketFactory
     {
         var dataLength = GetModeOperationLength(mode);
         var length = PacketHeader.Length + dataLength;
-        
-        Debug.Assert(packet.Length == length);
+
+        if (packet.Length != length)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {length}");
         
         var writer = new SpanWriter(packet);
         var header = new PacketHeader(deviceId, modeOperation, (uint)dataLength);
@@ -145,12 +157,39 @@ internal static class PacketFactory
     internal const int ProtocolVersionLength = 4;
     internal static void WriteProtocolVersion(Span<byte> packet,uint deviceId, uint protocolVersion, CommandId commandId)
     {
-        Debug.Assert(packet.Length == PacketHeader.Length + ProtocolVersionLength);
+        const int LENGTH = PacketHeader.Length + ProtocolVersionLength;
+        
+        if (packet.Length != LENGTH)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {LENGTH}");
         
         var writer = new SpanWriter(packet);
         var header = new PacketHeader(deviceId, commandId, ProtocolVersionLength);
         
         header.WriteTo(ref writer);
         writer.WriteUInt32(protocolVersion);
+    }
+
+    internal static int GetPluginSpecificLength(ReadOnlySpan<byte> data)
+    {
+        //4 uint plugin_packet_type
+        //x plugin_data
+
+        return 4 + data.Length;
+    }
+    public static void WritePluginSpecific(Span<byte> packet, uint pluginId, uint pluginPacketType, ReadOnlySpan<byte> data)
+    {
+        var dataLength = GetPluginSpecificLength(data);
+        var length = PacketHeader.Length + dataLength;
+
+        if (packet.Length != length)
+            throw new ArgumentException($"Packet length is {packet.Length} but should be {length}");
+        
+        var writer = new SpanWriter(packet);
+        var header = new PacketHeader(pluginId, CommandId.PluginSpecific, (uint)data.Length);
+        
+        header.WriteTo(ref writer);
+        writer.WriteUInt32(pluginPacketType);
+        if (data.Length > 0)
+            writer.WriteBytes(data);
     }
 }

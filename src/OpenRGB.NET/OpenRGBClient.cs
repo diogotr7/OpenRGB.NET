@@ -2,12 +2,9 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenRGB.NET.Utils;
@@ -31,7 +28,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     private readonly Dictionary<CommandId, BlockingCollection<byte[]>> _pendingRequests;
 
     /// <inheritdoc />
-    public bool Connected => _socket?.Connected ?? false;
+    public bool Connected => _socket.Connected;
 
     /// <inheritdoc />
     public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MaxProtocolNumber);
@@ -317,6 +314,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var buffer = SendHeaderAndGetResponse(CommandId.RequestPlugins, 0);
         var reader = new SpanReader(buffer);
+        var dataSize = reader.ReadUInt32();
         var count = reader.ReadUInt16();
 
         return Plugin.ReadManyFrom(ref reader, count);
@@ -478,20 +476,44 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         ModeOperation(deviceId, modeId, targetMode, CommandId.SaveMode);
     }
 
+    /// <inheritdoc />
+    public void PluginSpecific(int pluginId, int pluginPacketType, ReadOnlySpan<byte> data)
+    {
+        if (!CommonProtocolVersion.SupportsSegmentsAndPlugins)
+            throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion.Number}");
+
+        var length = PacketHeader.Length + PacketFactory.GetPluginSpecificLength(data);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
+
+        PacketFactory.WritePluginSpecific(packet, (uint)pluginPacketType, (uint)pluginId, data);
+
+        try
+        {
+            SendOrThrow(packet);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rent);
+        }
+    }
+
     #endregion
 
     /// <inheritdoc />
     public void Dispose()
     {
+        _cancellationTokenSource.Cancel();
+
         try
         {
-            _cancellationTokenSource.Cancel();
             _readLoopTask?.Wait();
-            _socket.Dispose();
         }
         catch
         {
             // ignored
         }
+        _socket.Dispose();
+
     }
 }

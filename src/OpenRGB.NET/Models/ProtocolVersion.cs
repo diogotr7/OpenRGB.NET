@@ -76,16 +76,13 @@ public readonly struct ProtocolVersion
     /// <summary>
     ///     Gets a protocol version from a number
     /// </summary>
-    public static ProtocolVersion FromNumber(uint number)
+    public static ProtocolVersion FromNumber(uint number) => number switch
     {
-        return number switch
-        {
-            0 => V0,
-            1 => V1,
-            2 => V2,
-            3 => V3,
-            4 => V4,
-            _ => throw new ArgumentOutOfRangeException(nameof(number), number, "Unknown protocol version")
-        };
-    }
+        0 => V0,
+        1 => V1,
+        2 => V2,
+        3 => V3,
+        4 => V4,
+        _ => throw new ArgumentOutOfRangeException(nameof(number), number, "Unknown protocol version")
+    };
 }

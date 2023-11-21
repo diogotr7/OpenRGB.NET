@@ -3,7 +3,7 @@
 /// <summary>
 ///     Enum representing the different types a zone can be.
 /// </summary>
-public enum ZoneType
+public enum ZoneType : uint
 {
     /// <summary>
     ///     This zone represents one LED.

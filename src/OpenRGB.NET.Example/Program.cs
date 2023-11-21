@@ -4,15 +4,6 @@ using System.Buffers;
 using OpenRGB.NET;
 using OpenRGB.NET.Utils;
 
-//Moves each element 1 forward, wrapping the last element to the first position
-void MoveOne<T>(Span<T> data)
-{
-    var last = data[^1];
-    for (var i = data.Length - 1; i > 0; i--)
-        data[i] = data[i - 1];
-    data[0] = last;
-}
-
 using var client = new OpenRgbClient();
 client.Connect();
 Console.WriteLine("Connected to OpenRGB");
@@ -23,42 +14,34 @@ Console.WriteLine("Found devices:");
 foreach (var device in devices)
     Console.WriteLine(device.Name);
 
-//set everything to red
-foreach(var device in devices)
-{
-    var colors = new Color[device.Colors.Length];
-    for (var i = 0; i < colors.Length; i++)
-        colors[i] = new Color(255,0,0);
-
-    client.UpdateLeds(device.Index, colors);
-}
-Console.WriteLine("Press any key to continue");
-
-Console.ReadKey();
-
-//animate hue
 Console.WriteLine("Starting animation");
-var run = true;
+var cts = new CancellationTokenSource();
 var updateTask = Task.Run(() =>
 {
     var deviceColors = new Color[devices.Length][];
     for (var index = 0; index < devices.Length; index++)
-        deviceColors[index] = ColorUtils.GetSinRainbow(devices[index].Leds.Length).ToArray();
-
-    while (run)
+    {
+        var arr = ColorUtils.GetHueRainbow(devices[index].Leds.Length).ToArray();
+        deviceColors[index] = arr.Concat(arr).ToArray();
+    }
+    var colorOffsets = Enumerable.Range(0, devices.Length).Select(x => x).ToArray();
+    while (!cts.IsCancellationRequested)
     {
         for (var index = 0; index < devices.Length; index++)
         {
             var colors = deviceColors[index];
-            MoveOne<Color>(colors);
-            client.UpdateLeds(index, colors);
+            if (colors.Length == 0)
+                continue;
+            
+            var slice = colors.AsSpan().Slice(colorOffsets[index]++ % devices[index].Leds.Length , devices[index].Leds.Length);
+            client.UpdateLeds(index, slice);
         }
 
-        Thread.Sleep(10);
+        Thread.Sleep(33);
     }
 });
 
 Console.WriteLine("Press any key to exit");
 Console.ReadKey();
-run = false;
+cts.Cancel();
 updateTask.Wait();

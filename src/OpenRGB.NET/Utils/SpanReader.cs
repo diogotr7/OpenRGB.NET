@@ -11,7 +11,7 @@ internal ref struct SpanReader
     public ReadOnlySpan<byte> Span { get; }
     public int Position { get; private set; }
 
-    public SpanReader(in ReadOnlySpan<byte> span)
+    public SpanReader(ReadOnlySpan<byte> span)
     {
         Span = span;
         Position = 0;

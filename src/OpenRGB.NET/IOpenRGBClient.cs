@@ -48,9 +48,9 @@ public interface IOpenRgbClient
     /// <summary>
     ///     Requests the data block for a given controller index.
     /// </summary>
-    /// <param name="id">The index of the controller to request the data from.</param>
+    /// <param name="deviceId">The index of the controller to request the data from.</param>
     /// <returns>The Device containing the decoded data for the controller with the given id.</returns>
-    Device GetControllerData(int id);
+    Device GetControllerData(int deviceId);
 
     /// <summary>
     ///     Requests the data for all the controllers detected by the server.

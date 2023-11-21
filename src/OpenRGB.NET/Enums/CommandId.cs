@@ -3,7 +3,7 @@
 /// <summary>
 ///     Enum representing the various commands supported by the SDK server.
 /// </summary>
-public enum CommandId
+public enum CommandId : uint
 {
     /// <summary>
     ///     Request the number of device controllers from the server.

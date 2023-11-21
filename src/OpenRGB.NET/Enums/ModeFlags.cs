@@ -6,7 +6,7 @@ namespace OpenRGB.NET;
 ///     Flags representing the capabilities a mode can have.
 /// </summary>
 [Flags]
-public enum ModeFlags
+public enum ModeFlags : uint
 {
     /// <summary>
     ///     This mode has no capabilities.

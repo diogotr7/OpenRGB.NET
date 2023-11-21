@@ -44,8 +44,8 @@ public class MatrixMap
         var matrix = new uint[height, width];
 
         for (var i = 0; i < height; i++)
-        for (var j = 0; j < width; j++)
-            matrix[i, j] = reader.ReadUInt32();
+            for (var j = 0; j < width; j++)
+                matrix[i, j] = reader.ReadUInt32();
 
         return new MatrixMap(height, width, matrix);
     }
@@ -56,7 +56,7 @@ public class MatrixMap
         writer.WriteUInt32(Width);
 
         for (var i = 0; i < Height; i++)
-        for (var j = 0; j < Width; j++)
-            writer.WriteUInt32(Matrix[i, j]);
+            for (var j = 0; j < Width; j++)
+                writer.WriteUInt32(Matrix[i, j]);
     }
 }

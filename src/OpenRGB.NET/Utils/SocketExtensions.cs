@@ -1,22 +1,20 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace OpenRGB.NET.Utils;
 
 internal static class SocketExtensions
 {
-    internal static void Connect(this Socket socket, string ip, int port, TimeSpan timeout)
+    public static bool Connect(this Socket socket, string host, int port, int timeoutMs)
     {
-        var result = socket.BeginConnect(ip, port, null, null);
-
-        if (result.AsyncWaitHandle.WaitOne(timeout, true))
-        {
-            socket.EndConnect(result);
-        }
-        else
-        {
-            socket.Close();
-            throw new SocketException(10060); // Connection timed out.
-        }
+        var result = socket.ConnectAsync(host, port);               
+        Task.WaitAny(new[] { result }, timeoutMs);
+        
+        if (socket.Connected)
+            return true;
+        
+        socket.Close();
+        throw new TimeoutException("Could not connect to OpenRGB");
     }
 }

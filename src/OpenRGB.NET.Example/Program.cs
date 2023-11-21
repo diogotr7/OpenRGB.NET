@@ -45,3 +45,4 @@ Console.WriteLine("Press any key to exit");
 Console.ReadKey();
 cts.Cancel();
 updateTask.Wait();
+Console.WriteLine("Exited.");

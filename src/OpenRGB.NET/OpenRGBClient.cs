@@ -82,7 +82,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (Connected)
             return;
 
-        _socket.Connect(_ip, _port, TimeSpan.FromMilliseconds(_timeoutMs));
+        _socket.Connect(_ip, _port, _timeoutMs);
         _readLoopTask = Task.Run(ReadLoop);
 
         var length = PacketHeader.Length + PacketFactory.GetStringOperationLength(_name);
@@ -103,15 +103,15 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         var minimumCommonVersionNumber = Math.Min(ClientProtocolVersion.Number, GetServerProtocolVersion());
         CommonProtocolVersion = ProtocolVersion.FromNumber(minimumCommonVersionNumber);
     }
-    
+
     private async Task ReadLoop()
     {
-        try
+        while (!_cancellationTokenSource.IsCancellationRequested && Connected)
         {
-            while (!_cancellationTokenSource.IsCancellationRequested && Connected)
+            try
             {
                 //todo: handle zero
-                await _socket.ReceiveAsync(_headerBuffer, SocketFlags.None);
+                await _socket.ReceiveAsync(_headerBuffer, SocketFlags.None, _cancellationTokenSource.Token);
 
                 var dataLength = ParseHeader();
                 if (dataLength.Command == CommandId.DeviceListUpdated)
@@ -122,23 +122,23 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
                 else
                 {
                     var dataBuffer = new byte[dataLength.DataLength];
-                    await _socket.ReceiveAsync(dataBuffer, SocketFlags.None);
+                    await _socket.ReceiveAsync(dataBuffer, SocketFlags.None, _cancellationTokenSource.Token);
                     _pendingRequests[dataLength.Command].Add(dataBuffer);
                 }
             }
-        }
-        catch (TaskCanceledException)
-        {
-            //ignore
+            catch (TaskCanceledException)
+            {
+                //ignore
+            }
         }
     }
-    
+
     private PacketHeader ParseHeader()
     {
         var reader = new SpanReader(_headerBuffer);
         return PacketHeader.ReadFrom(ref reader);
     }
-    
+
     private void SendHeader(CommandId command, uint deviceId)
     {
         Span<byte> packet = stackalloc byte[PacketHeader.Length];
@@ -207,7 +207,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         return serverVersion;
     }
-    
+
     private void ProfileOperation(string profile, CommandId operation)
     {
         if (!CommonProtocolVersion.SupportsProfileControls)
@@ -228,7 +228,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             ArrayPool<byte>.Shared.Return(rent);
         }
     }
-    
+
     private void ModeOperation(int deviceId, int modeId, Mode targetMode, CommandId operation)
     {
         var length = PacketHeader.Length + PacketFactory.GetModeOperationLength(targetMode);
@@ -424,7 +424,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     {
         ProfileOperation(profile, CommandId.DeleteProfile);
     }
-    
+
     /// <inheritdoc />
     public void UpdateMode(int deviceId, int modeId,
         uint? speed = null,

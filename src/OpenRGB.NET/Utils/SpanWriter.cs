@@ -7,16 +7,10 @@ namespace OpenRGB.NET.Utils;
 #if DEBUG
 [NonCopyable]
 #endif
-internal ref struct SpanWriter
+internal ref struct SpanWriter(Span<byte> span)
 {
-    public Span<byte> Span { get; }
-    public int Position { get; private set; }
-    
-    public SpanWriter(in Span<byte> span)
-    {
-        Span = span;
-        Position = 0;
-    }
+    public Span<byte> Span { get; } = span;
+    public int Position { get; private set; } = 0;
 
     public void WriteUInt16(ushort value)
     {

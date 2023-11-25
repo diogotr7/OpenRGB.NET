@@ -228,9 +228,9 @@ public class Mode
             color.WriteTo(ref writer);
     }
 
-    internal uint GetLength()
+    internal int GetLength()
     {
-        var size = (uint)(
+        var size = (
             sizeof(int) * 2 +
             sizeof(uint) * 9 +
             sizeof(ushort) * 2 +

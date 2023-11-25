@@ -3,7 +3,7 @@
 /// <summary>
 ///     Enum representing the various device types supported.
 /// </summary>
-public enum DeviceType
+public enum DeviceType : uint
 {
     /// <summary>
     ///     Motherboard device type.

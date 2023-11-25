@@ -3,8 +3,10 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
@@ -14,20 +16,22 @@ namespace OpenRGB.NET;
 /// </summary>
 public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 {
-    private const int MAX_PROTOCOL_NUMBER = 4;
+    private const int MaxProtocolNumber = 4;
     private readonly string _name;
     private readonly string _ip;
     private readonly int _port;
     private readonly int _timeoutMs;
     private readonly Socket _socket;
-    private readonly byte[] _headerBuffer = new byte[PacketHeader.Length];
-    private readonly Dictionary<uint, BlockingCollection<byte[]>> _pendingRequests;
-    
-    /// <inheritdoc />
-    public bool Connected => _socket?.Connected ?? false;
+    private readonly byte[] _headerBuffer;
+    private Task? _readLoopTask;
+    private readonly CancellationTokenSource _cancellationTokenSource;
+    private readonly Dictionary<CommandId, BlockingCollection<byte[]>> _pendingRequests;
 
     /// <inheritdoc />
-    public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MAX_PROTOCOL_NUMBER);
+    public bool Connected => _socket.Connected;
+
+    /// <inheritdoc />
+    public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MaxProtocolNumber);
 
     /// <inheritdoc />
     public ProtocolVersion ClientProtocolVersion { get; }
@@ -43,25 +47,23 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     ///     Connects to the server immediately unless autoConnect is set to false.
     /// </summary>
     public OpenRgbClient(string ip = "127.0.0.1",
-                        int port = 6742,
-                        string name = "OpenRGB.NET",
-                        bool autoConnect = true,
-                        int timeoutMs = 1000,
-                        uint protocolVersionNumber = MAX_PROTOCOL_NUMBER)
+        int port = 6742,
+        string name = "OpenRGB.NET",
+        bool autoConnect = true,
+        int timeoutMs = 1000,
+        uint protocolVersionNumber = MaxProtocolNumber)
     {
         _ip = ip;
         _port = port;
         _name = name;
         _timeoutMs = timeoutMs;
-        
-        _pendingRequests = new Dictionary<uint, BlockingCollection<byte[]>>();
-        foreach (var item in Enum.GetValues<CommandId>())
-            _pendingRequests[(uint)item] = new BlockingCollection<byte[]>();
-        
+        _cancellationTokenSource = new CancellationTokenSource();
+        _pendingRequests = Enum.GetValues(typeof(CommandId)).Cast<CommandId>().ToDictionary(c => c, _ => new BlockingCollection<byte[]>());
+        _headerBuffer = new byte[PacketHeader.Length];
         _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _socket.NoDelay = true;
 
-        if (protocolVersionNumber > MAX_PROTOCOL_NUMBER)
+        if (protocolVersionNumber > MaxProtocolNumber)
             throw new ArgumentException("Client protocol version provided higher than supported.",
                 nameof(protocolVersionNumber));
 
@@ -77,115 +79,194 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (Connected)
             return;
 
-        _socket.Connect(_ip, _port, TimeSpan.FromMilliseconds(_timeoutMs));
+        _socket.Connect(_ip, _port, _timeoutMs);
+        _readLoopTask = Task.Run(ReadLoop);
 
-        BeginReceive();
-        
-        //null terminate before sending
-        SendMessage(CommandId.SetClientName, Encoding.ASCII.GetBytes(_name + '\0'));
+        var length = PacketHeader.Length + PacketFactory.GetStringOperationLength(_name);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
+
+        PacketFactory.WriteStringOperation(packet, _name, CommandId.SetClientName);
+
+        try
+        {
+            SendOrThrow(packet);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rent);
+        }
 
         var minimumCommonVersionNumber = Math.Min(ClientProtocolVersion.Number, GetServerProtocolVersion());
         CommonProtocolVersion = ProtocolVersion.FromNumber(minimumCommonVersionNumber);
     }
 
-    /// <summary>
-    ///     Sends a message to the server with the given command and buffer of data.
-    ///     Takes care of sending a header packet first to tell the server how many bytes to read.
-    /// </summary>
-    /// <param name="command"></param>
-    /// <param name="buffer"></param>
-    /// <param name="deviceId"></param>
-    private void SendMessage(CommandId command, ReadOnlySpan<byte> buffer = default, uint deviceId = 0)
+    private async Task ReadLoop()
     {
-        //we can send the header right away. it contains the command we are sending
-        //and the size of the packet that follows
-        var header = new PacketHeader(deviceId, (uint)command, (uint)buffer.Length);
-        Span<byte> headerBuffer = stackalloc byte[PacketHeader.Length];
-        
-        var headerWriter = new SpanWriter(headerBuffer);
-        header.WriteTo(ref headerWriter);
+        while (!_cancellationTokenSource.IsCancellationRequested && Connected)
+        {
+            try
+            {
+                //todo: handle zero
+                await _socket.ReceiveAsync(_headerBuffer, SocketFlags.None, _cancellationTokenSource.Token);
 
-        if (_socket.Send(headerBuffer) != PacketHeader.Length)
-            throw new IOException("Sent incorrect number of bytes when sending header in " + nameof(SendMessage));
-
-        if (header.DataLength <= 0)
-            return;
-
-        if (_socket.SendFull(buffer) != header.DataLength)
-            throw new IOException("Sent incorrect number of bytes when sending data in " + nameof(SendMessage));
+                var dataLength = ParseHeader();
+                if (dataLength.Command == CommandId.DeviceListUpdated)
+                {
+                    //TODO: is this the best way to do this?
+                    DeviceListUpdated?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    var dataBuffer = new byte[dataLength.DataLength];
+                    await _socket.ReceiveAsync(dataBuffer, SocketFlags.None, _cancellationTokenSource.Token);
+                    _pendingRequests[dataLength.Command].Add(dataBuffer);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                //ignore
+            }
+        }
     }
 
-    private byte[] SendMessageAndGetResponse(CommandId command, ReadOnlySpan<byte> buffer = default, uint deviceId = 0)
+    private PacketHeader ParseHeader()
     {
-        SendMessage(command, buffer, deviceId);
+        var reader = new SpanReader(_headerBuffer);
+        return PacketHeader.ReadFrom(ref reader);
+    }
 
-        if (!_pendingRequests[(uint)command].TryTake(out var outBuffer, _timeoutMs))
+    private void SendHeader(CommandId command, uint deviceId)
+    {
+        Span<byte> packet = stackalloc byte[PacketHeader.Length];
+        var writer = new SpanWriter(packet);
+
+        var header = new PacketHeader(deviceId, command, 0);
+        header.WriteTo(ref writer);
+
+        SendOrThrow(packet);
+    }
+
+    private byte[] SendHeaderAndGetResponse(CommandId command, uint deviceId)
+    {
+        SendHeader(command, deviceId);
+
+        return GetResponse(command);
+    }
+
+    private byte[] GetResponse(CommandId command)
+    {
+        if (!_pendingRequests[command].TryTake(out var outBuffer, _timeoutMs))
             throw new TimeoutException($"Did not receive response to {command} in expected time of {_timeoutMs} ms");
 
         return outBuffer;
     }
 
-    private void OnReceive(IAsyncResult ar)
+    private void SendOrThrow(Span<byte> buffer)
     {
-        if (_socket is not { Connected: true }) return;
+        var size = buffer.Length;
+        var total = 0;
+
+        while (total < size)
+        {
+            var recv = _socket.Send(buffer[total..]);
+            if (recv == 0 && total != size)
+            {
+                throw new IOException("Sent incorrect number of bytes.");
+            }
+
+            total += recv;
+        }
+    }
+
+    private uint GetServerProtocolVersion()
+    {
+        uint serverVersion;
+
+        _socket.ReceiveTimeout = 1000;
+
+        Span<byte> packet = stackalloc byte[PacketHeader.Length + PacketFactory.ProtocolVersionLength];
+        PacketFactory.WriteProtocolVersion(packet, 0, CommonProtocolVersion.Number, CommandId.RequestProtocolVersion);
 
         try
         {
-            _socket.EndReceive(ar);
+            SendOrThrow(packet);
+
+            var response = GetResponse(CommandId.RequestProtocolVersion);
+            serverVersion = BitConverter.ToUInt32(response);
         }
-        catch
+        catch (SocketException e) when (e.SocketErrorCode == SocketError.TimedOut)
         {
-            //means socket is closed. throwing exception here would crash the host app. (this is separate thread)
-            return;
+            serverVersion = 0;
         }
 
-        //decode _headerBuffer into a header to know how many bytes we will receive next
-        var reader = new SpanReader(_headerBuffer);
-        var header = PacketHeader.ReadFrom(ref reader);
+        _socket.ReceiveTimeout = 0;
 
-        if (header.Command == (uint)CommandId.DeviceListUpdated)
-        {
-            var dataBuffer = new byte[header.DataLength];
-            _socket.ReceiveFull(dataBuffer);
-
-            BeginReceive();
-            //notify users to update device list
-            DeviceListUpdated?.Invoke(this, EventArgs.Empty);
-        }
-        else
-        {
-            //we then make a buffer that will receive the data
-            var dataBuffer = new byte[header.DataLength];
-            _socket.ReceiveFull(dataBuffer);
-
-            _pendingRequests[header.Command].Add(dataBuffer);
-
-            BeginReceive();
-        }
+        return serverVersion;
     }
 
-    private void BeginReceive()
+    private void ProfileOperation(string profile, CommandId operation)
     {
-        if (!_socket.Connected) return;
-        
-        _socket.BeginReceive(_headerBuffer, 0, PacketHeader.Length, SocketFlags.None, OnReceive, null);
+        if (!CommonProtocolVersion.SupportsProfileControls)
+            throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
+
+        var length = PacketHeader.Length + PacketFactory.GetStringOperationLength(profile);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
+
+        PacketFactory.WriteStringOperation(packet, profile, operation);
+
+        try
+        {
+            SendOrThrow(packet);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rent);
+        }
     }
+
+    private void ModeOperation(int deviceId, int modeId, Mode targetMode, CommandId operation)
+    {
+        var length = PacketHeader.Length + PacketFactory.GetModeOperationLength(targetMode);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
+
+        PacketFactory.WriteModeOperation(packet, (uint)deviceId, (uint)modeId, targetMode, operation);
+
+        try
+        {
+            SendOrThrow(packet);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rent);
+        }
+    }
+
+    #region API
 
     /// <inheritdoc />
     public int GetControllerCount()
     {
-        return (int)BitConverter.ToUInt32(SendMessageAndGetResponse(CommandId.RequestControllerCount), 0);
+        return (int)BitConverter.ToUInt32(SendHeaderAndGetResponse(CommandId.RequestControllerCount, 0), 0);
     }
 
     /// <inheritdoc />
-    public Device GetControllerData(int id)
+    public Device GetControllerData(int deviceId)
     {
-        if (id < 0)
-            throw new ArgumentException("Unexpected device Id", nameof(id));
+        if (deviceId < 0)
+            throw new ArgumentException("Unexpected device Id", nameof(deviceId));
 
-        var response = SendMessageAndGetResponse(CommandId.RequestControllerData,BitConverter.GetBytes(CommonProtocolVersion.Number), (uint)id);
+        Span<byte> packet = stackalloc byte[PacketHeader.Length + PacketFactory.ProtocolVersionLength];
+
+        PacketFactory.WriteProtocolVersion(packet, (uint)deviceId, CommonProtocolVersion.Number, CommandId.RequestControllerData);
+
+        SendOrThrow(packet);
+
+        var response = GetResponse(CommandId.RequestControllerData);
         var responseReader = new SpanReader(response);
-        return Device.ReadFrom(ref responseReader, CommonProtocolVersion, id);
+        return Device.ReadFrom(ref responseReader, CommonProtocolVersion, deviceId);
     }
 
     /// <inheritdoc />
@@ -205,12 +286,14 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     {
         if (!CommonProtocolVersion.SupportsProfileControls)
             throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
-        
-        Span<byte> protocolVersionBuffer = stackalloc byte[4];
-        var protocolVersionWriter = new SpanWriter(protocolVersionBuffer);
-        protocolVersionWriter.WriteUInt32(CommonProtocolVersion.Number);
-        
-        var buffer = SendMessageAndGetResponse(CommandId.RequestProfiles, protocolVersionBuffer);
+
+        Span<byte> packet = stackalloc byte[PacketHeader.Length + PacketFactory.ProtocolVersionLength];
+
+        PacketFactory.WriteProtocolVersion(packet, 0, CommonProtocolVersion.Number, CommandId.RequestProfiles);
+
+        SendOrThrow(packet);
+
+        var buffer = GetResponse(CommandId.RequestProfiles);
 
         var reader = new SpanReader(buffer);
         var dataSize = reader.ReadUInt32();
@@ -222,61 +305,29 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         return profiles;
     }
-    
+
     /// <inheritdoc />
     public Plugin[] GetPlugins()
     {
         if (!CommonProtocolVersion.SupportsSegmentsAndPlugins)
             throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion.Number}");
 
-        var buffer = SendMessageAndGetResponse(CommandId.RequestPlugins);
-
+        var buffer = SendHeaderAndGetResponse(CommandId.RequestPlugins, 0);
         var reader = new SpanReader(buffer);
+        var dataSize = reader.ReadUInt32();
         var count = reader.ReadUInt16();
-        
+
         return Plugin.ReadManyFrom(ref reader, count);
-    }
-
-    private byte[] SendPluginSpecificData(int pluginIndex, ReadOnlySpan<byte> data)
-    {
-        return Array.Empty<byte>();
-        //TODO
-        //return SendMessageAndGetResponse(CommandId.PluginSpecific, data, (uint)pluginIndex);
-    }
-
-    private uint GetServerProtocolVersion()
-    {
-        uint serverVersion;
-
-        _socket.ReceiveTimeout = 1000;
-        
-        Span<byte> buffer = stackalloc byte[4];
-        var writer = new SpanWriter(buffer);
-        writer.WriteUInt32(ClientProtocolVersion.Number);
-        
-        try
-        {
-            var response = SendMessageAndGetResponse(CommandId.RequestProtocolVersion,buffer);
-            serverVersion = BitConverter.ToUInt32(response);
-        }
-        catch (SocketException e) when (e.SocketErrorCode == SocketError.TimedOut)
-        {
-            serverVersion = 0;
-        }
-
-        _socket.ReceiveTimeout = 0;
-
-        return serverVersion;
     }
 
     /// <inheritdoc />
     public void ResizeZone(int deviceId, int zoneId, int size)
     {
         Span<byte> packet = stackalloc byte[PacketFactory.ResizeZoneLength];
-        var writer = new SpanWriter(packet);
-        PacketFactory.ResizeZone(ref writer, (uint)zoneId, (uint)size);
 
-        SendMessage(CommandId.ResizeZone, packet, (uint)deviceId);
+        PacketFactory.WriteResizeZone(packet, (uint)deviceId, (uint)zoneId, (uint)size);
+
+        SendOrThrow(packet);
     }
 
     /// <inheritdoc />
@@ -288,16 +339,15 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (deviceId < 0)
             throw new ArgumentException("Invalid deviceId", nameof(deviceId));
 
-        var packetLength = (int)PacketFactory.UpdateLedsLength(colors.Length);
-        var rent = ArrayPool<byte>.Shared.Rent(packetLength);
-        var packet = rent.AsSpan(0, packetLength);
-        var writer = new SpanWriter(packet);
+        var length = PacketHeader.Length + PacketFactory.GetUpdateLedsLength(colors.Length);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
 
-        PacketFactory.UpdateLeds(ref writer, in colors);
+        PacketFactory.WriteUpdateLeds(packet, deviceId, colors);
 
         try
         {
-            SendMessage(CommandId.UpdateLeds, packet, (uint)deviceId);
+            SendOrThrow(packet);
         }
         finally
         {
@@ -317,16 +367,15 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (zoneId < 0)
             throw new ArgumentException("Invalid zone id", nameof(zoneId));
 
-        var packetLength = (int)PacketFactory.UpdateZoneLedsLength(colors.Length);
-        var rent = ArrayPool<byte>.Shared.Rent(packetLength);
-        var packet = rent.AsSpan(0, packetLength);
-        var writer = new SpanWriter(packet);
+        var length = PacketHeader.Length + PacketFactory.GetUpdateZoneLedsLength(colors.Length);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
 
-        PacketFactory.UpdateZoneLeds(ref writer, (uint)zoneId, colors);
-        
+        PacketFactory.WriteUpdateZoneLeds(packet, (uint)deviceId, (uint)zoneId, colors);
+
         try
         {
-            SendMessage(CommandId.UpdateZoneLeds, packet, (uint)deviceId);
+            SendOrThrow(packet);
         }
         finally
         {
@@ -337,45 +386,41 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public void UpdateSingleLed(int deviceId, int ledId, Color color)
     {
-        Span<byte> packet = stackalloc byte[PacketFactory.UpdateSingleLedLength];
-        var writer = new SpanWriter(packet);
-        
-        PacketFactory.UpdateSingleLed(ref writer, (uint)ledId, in color);
+        if (deviceId < 0)
+            throw new ArgumentException("Invalid device id.", nameof(deviceId));
 
-        SendMessage(CommandId.UpdateSingleLed, packet, (uint)deviceId);
+        if (ledId < 0)
+            throw new ArgumentException("Invalid led id", nameof(ledId));
+
+        Span<byte> packet = stackalloc byte[PacketHeader.Length + PacketFactory.UpdateSingleLedLength];
+
+        PacketFactory.WriteUpdateSingleLed(packet, (uint)deviceId, (uint)ledId, color);
+
+        SendOrThrow(packet);
     }
 
     /// <inheritdoc />
     public void SetCustomMode(int deviceId)
     {
-        SendMessage(CommandId.SetCustomMode, null, (uint)deviceId);
+        SendHeader(CommandId.SetCustomMode, (uint)deviceId);
     }
 
     /// <inheritdoc />
     public void LoadProfile(string profile)
     {
-        if (!CommonProtocolVersion.SupportsProfileControls)
-            throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
-
-        SendMessage(CommandId.LoadProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        ProfileOperation(profile, CommandId.LoadProfile);
     }
 
     /// <inheritdoc />
     public void SaveProfile(string profile)
     {
-        if (!CommonProtocolVersion.SupportsProfileControls)
-            throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
-
-        SendMessage(CommandId.SaveProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        ProfileOperation(profile, CommandId.SaveProfile);
     }
 
     /// <inheritdoc />
     public void DeleteProfile(string profile)
     {
-        if (!CommonProtocolVersion.SupportsProfileControls)
-            throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion}");
-
-        SendMessage(CommandId.DeleteProfile, Encoding.ASCII.GetBytes(profile + '\0'));
+        ProfileOperation(profile, CommandId.DeleteProfile);
     }
 
     /// <inheritdoc />
@@ -415,23 +460,9 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             targetMode.SetColors(colors);
         }
 
-        var packetLength = (int)targetMode.GetLength();
-        var rent = ArrayPool<byte>.Shared.Rent(packetLength);
-        var packet = rent.AsSpan(0, packetLength);
-        var writer = new SpanWriter(packet);
-            
-        PacketFactory.UpdateMode(ref writer, targetMode, (uint)modeId);
-        
-        try
-        {
-            SendMessage(CommandId.UpdateMode, packet, (uint)deviceId);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(rent);
-        }
+        ModeOperation(deviceId, modeId, targetMode, CommandId.UpdateMode);
     }
-    
+
     /// <inheritdoc />
     public void SaveMode(int deviceId, int modeId)
     {
@@ -441,17 +472,25 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             throw new ArgumentException(nameof(modeId));
 
         var targetMode = targetDevice.Modes[modeId];
-        
-        var packetLength = (int)targetMode.GetLength();
-        var rent = ArrayPool<byte>.Shared.Rent(packetLength);
-        var packet = rent.AsSpan(0, packetLength);
-        var writer = new SpanWriter(packet);
 
-        PacketFactory.UpdateMode(ref writer, targetMode, (uint)modeId);
-        
+        ModeOperation(deviceId, modeId, targetMode, CommandId.SaveMode);
+    }
+
+    /// <inheritdoc />
+    public void PluginSpecific(int pluginId, int pluginPacketType, ReadOnlySpan<byte> data)
+    {
+        if (!CommonProtocolVersion.SupportsSegmentsAndPlugins)
+            throw new NotSupportedException($"Not supported on protocol version {ClientProtocolVersion.Number}");
+
+        var length = PacketHeader.Length + PacketFactory.GetPluginSpecificLength(data);
+        var rent = ArrayPool<byte>.Shared.Rent(length);
+        var packet = rent.AsSpan(0, length);
+
+        PacketFactory.WritePluginSpecific(packet, (uint)pluginPacketType, (uint)pluginId, data);
+
         try
         {
-            SendMessage(CommandId.SaveMode, packet, (uint)deviceId);
+            SendOrThrow(packet);
         }
         finally
         {
@@ -459,9 +498,22 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         }
     }
 
+    #endregion
+
     /// <inheritdoc />
     public void Dispose()
     {
+        _cancellationTokenSource.Cancel();
+
+        try
+        {
+            _readLoopTask?.Wait();
+        }
+        catch
+        {
+            // ignored
+        }
         _socket.Dispose();
+
     }
 }

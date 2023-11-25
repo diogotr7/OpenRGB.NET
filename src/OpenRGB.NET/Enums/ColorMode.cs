@@ -4,7 +4,7 @@
 ///     Enum representing how a specific Mode uses
 ///     the colors assigned to it.
 /// </summary>
-public enum ColorMode
+public enum ColorMode : uint
 {
     /// <summary>
     ///     The mode does not use any color.

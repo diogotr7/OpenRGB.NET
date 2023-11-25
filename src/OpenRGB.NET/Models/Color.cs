@@ -9,15 +9,8 @@ namespace OpenRGB.NET;
 /// <param name="R">The Red component</param>
 /// <param name="G">The Green component</param>
 /// <param name="B">The Blue component</param>
-public readonly record struct Color(byte R, byte G, byte B)
+public readonly record struct Color(byte R = 0, byte G = 0, byte B = 0)
 {
-    /// <summary>
-    ///     Constructs a default Color struct, set to (0,0,0).
-    /// </summary>
-    public Color() : this(0, 0, 0)
-    {
-    }
-
     /// <summary>
     ///     Red value of the color.
     /// </summary>

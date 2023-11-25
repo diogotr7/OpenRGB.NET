@@ -3,12 +3,12 @@
 /// <summary>
 ///     Enum representing the various directions a specific mode can have.
 /// </summary>
-public enum Direction
+public enum Direction : uint
 {
     /// <summary>
     ///     No direction.
     /// </summary>
-    None = -1,
+    None = uint.MaxValue,
 
     /// <summary>
     ///     Left direction.

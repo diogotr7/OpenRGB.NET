@@ -186,7 +186,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         _socket.ReceiveTimeout = 1000;
 
         Span<byte> packet = stackalloc byte[PacketHeader.Length + PacketFactory.ProtocolVersionLength];
-        PacketFactory.WriteProtocolVersion(packet, 0, CommonProtocolVersion.Number, CommandId.RequestProtocolVersion);
+        PacketFactory.WriteProtocolVersion(packet, 0, ClientProtocolVersion.Number, CommandId.RequestProtocolVersion);
 
         try
         {

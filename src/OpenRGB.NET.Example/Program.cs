@@ -20,6 +20,9 @@ foreach (var device in devices)
 
 Console.WriteLine("Starting animation");
 var cts = new CancellationTokenSource();
+
+const int fps = 60;
+
 var updateTask = Task.Run(() =>
 {
     var deviceColors = new Color[devices.Length][];
@@ -41,7 +44,7 @@ var updateTask = Task.Run(() =>
             client.UpdateLeds(index, slice);
         }
 
-        Thread.Sleep(33);
+        Thread.Sleep(1000 / fps);
     }
 });
 

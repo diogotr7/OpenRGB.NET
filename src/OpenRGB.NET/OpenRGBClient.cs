@@ -79,7 +79,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (Connected)
             return;
 
-        _socket.Connect(_ip, _port, _timeoutMs);
+        _socket.Connect(_ip, _port, _timeoutMs, _cancellationTokenSource.Token);
         _readLoopTask = Task.Run(ReadLoop);
 
         var length = PacketHeader.Length + PacketFactory.GetStringOperationLength(_name);
@@ -504,6 +504,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     public void Dispose()
     {
         _cancellationTokenSource.Cancel();
+        _cancellationTokenSource.Dispose();
 
         try
         {

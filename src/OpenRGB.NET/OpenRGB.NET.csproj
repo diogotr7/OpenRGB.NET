@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <LangVersion>12</LangVersion>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <Version>3.0.1</Version>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -15,6 +15,7 @@
         <PackageProjectUrl>https://github.com/diogotr7/OpenRGB.NET</PackageProjectUrl>
         <RepositoryUrl>https://github.com/diogotr7/OpenRGB.NET</RepositoryUrl>
         <PackageTags>openrgb, rgb, sdk, client</PackageTags>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     
     <ItemGroup>

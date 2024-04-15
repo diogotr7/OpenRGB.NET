@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
@@ -7,11 +6,11 @@ namespace OpenRGB.NET;
 /// <summary>
 ///     Packet Header class containing the command ID and the length of the data to be sent.
 /// </summary>
-internal readonly struct PacketHeader
+internal readonly struct PacketHeader : ISpanWritable
 {
-    internal const int Length = 16;
-    private const string Magic = "ORGB";
-    internal static readonly byte[] MagicBytes = Encoding.ASCII.GetBytes(Magic);
+    internal const int LENGTH = 16;
+    internal static ReadOnlySpan<byte> MagicBytes => "ORGB"u8;
+
     internal uint DeviceId { get; }
     internal CommandId Command { get; }
     internal uint DataLength { get; }
@@ -23,19 +22,27 @@ internal readonly struct PacketHeader
         DataLength = length;
     }
 
-    internal static PacketHeader ReadFrom(ref SpanReader reader)
+    public int Length => LENGTH;
+
+    public static PacketHeader ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
     {
         if (!reader.ReadBytes(4).SequenceEqual(MagicBytes))
-            throw new ArgumentException($"Magic bytes \"{Magic}\" were not found. Data was {reader.Span.ToArray()}");
+            throw new ArgumentException($"Magic bytes \"ORGB\" were not found");
 
-        return new PacketHeader(reader.ReadUInt32(), (CommandId)reader.ReadUInt32(), reader.ReadUInt32());
+        return new PacketHeader(reader.Read<uint>(), (CommandId)reader.Read<uint>(), reader.Read<uint>());
+    }
+    
+    public static PacketHeader FromSpan(ReadOnlySpan<byte> span)
+    {
+        var reader = new SpanReader(span);
+        return ReadFrom(ref reader);
     }
 
-    internal void WriteTo(ref SpanWriter writer)
+    public void WriteTo(ref SpanWriter writer)
     {
-        writer.WriteBytes(MagicBytes);
-        writer.WriteUInt32(DeviceId);
-        writer.WriteUInt32((uint)Command);
-        writer.WriteUInt32(DataLength);
+        writer.Write(MagicBytes);
+        writer.Write(DeviceId);
+        writer.Write((uint)Command);
+        writer.Write(DataLength);
     }
 }

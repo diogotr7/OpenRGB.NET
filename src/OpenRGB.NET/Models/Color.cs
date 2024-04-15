@@ -26,12 +26,15 @@ public readonly record struct Color(byte R = 0, byte G = 0, byte B = 0)
     /// </summary>
     public byte B { get; } = B;
 
+    //Added for padding, so Color fits within 4 bytes. TODO verify byte order
+    private readonly byte UnusedAlpha = 0;
+
     private static Color ReadFrom(ref SpanReader reader)
     {
-        var r = reader.ReadByte();
-        var g = reader.ReadByte();
-        var b = reader.ReadByte();
-        var a = reader.ReadByte();
+        var r = reader.Read<byte>();
+        var g = reader.Read<byte>();
+        var b = reader.Read<byte>();
+        var a = reader.Read<byte>();
 
         return new Color(r, g, b);
     }
@@ -42,7 +45,7 @@ public readonly record struct Color(byte R = 0, byte G = 0, byte B = 0)
             throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than or equal to 0.");
 
         if (count == 0)
-            return Array.Empty<Color>();
+            return [];
         
         var colors = new Color[count];
 
@@ -54,9 +57,9 @@ public readonly record struct Color(byte R = 0, byte G = 0, byte B = 0)
 
     internal void WriteTo(ref SpanWriter writer)
     {
-        writer.WriteByte(R);
-        writer.WriteByte(G);
-        writer.WriteByte(B);
-        writer.WriteByte(0);
+        writer.Write(R);
+        writer.Write(G);
+        writer.Write(B);
+        writer.Write(UnusedAlpha);
     }
 }

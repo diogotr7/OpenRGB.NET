@@ -8,7 +8,7 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Device
 {
-    private Device(int index, DeviceType type, string name, string? vendor,
+    internal Device(int index, DeviceType type, string name, string? vendor,
         string description, string version, string serial, string location, int activeModeIndex,
         Mode[] modes, Zone[] zones, Led[] leds, Color[] colors)
     {
@@ -96,32 +96,6 @@ public class Device
     ///     Shortcut for Modes[ActiveModeIndex], returns the currently active mode.
     /// </summary>
     public Mode ActiveMode => Modes[ActiveModeIndex];
-
-    internal static Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, int deviceIndex)
-    {
-        var duplicatePacketLength = reader.ReadUInt32();
-
-        var deviceType = reader.ReadInt32();
-        var name = reader.ReadLengthAndString();
-        var vendor = protocol.SupportsVendorString ? reader.ReadLengthAndString() : null;
-        var description = reader.ReadLengthAndString();
-        var version = reader.ReadLengthAndString();
-        var serial = reader.ReadLengthAndString();
-        var location = reader.ReadLengthAndString();
-        var modeCount = reader.ReadUInt16();
-        var activeMode = reader.ReadInt32();
-        var modes = Mode.ReadManyFrom(ref reader, modeCount, protocol);
-        var zoneCount = reader.ReadUInt16();
-        var zones = Zone.ReadManyFrom(ref reader, zoneCount, deviceIndex, protocol);
-        var ledCount = reader.ReadUInt16();
-        var leds = Led.ReadManyFrom(ref reader, ledCount);
-        var colorCount = reader.ReadUInt16();
-        var colors = Color.ReadManyFrom(ref reader, colorCount);
-
-        return new Device(deviceIndex, (DeviceType)deviceType,
-            name, vendor, description, version, serial, location,
-            activeMode, modes, zones, leds, colors);
-    }
 
     /// <inheritdoc />
     public override string ToString()

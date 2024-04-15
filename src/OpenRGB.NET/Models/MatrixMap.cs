@@ -37,26 +37,26 @@ public class MatrixMap
     /// <param name="reader"></param>
     internal static MatrixMap ReadFrom(ref SpanReader reader)
     {
-        var height = reader.ReadUInt32();
+        var height = reader.Read<uint>();
 
-        var width = reader.ReadUInt32();
+        var width = reader.Read<uint>();
 
         var matrix = new uint[height, width];
 
         for (var i = 0; i < height; i++)
             for (var j = 0; j < width; j++)
-                matrix[i, j] = reader.ReadUInt32();
+                matrix[i, j] = reader.Read<uint>();
 
         return new MatrixMap(height, width, matrix);
     }
 
     internal void WriteTo(ref SpanWriter writer)
     {
-        writer.WriteUInt32(Height);
-        writer.WriteUInt32(Width);
+        writer.Write(Height);
+        writer.Write(Width);
 
         for (var i = 0; i < Height; i++)
             for (var j = 0; j < Width; j++)
-                writer.WriteUInt32(Matrix[i, j]);
+                writer.Write(Matrix[i, j]);
     }
 }

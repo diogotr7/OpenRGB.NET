@@ -1,43 +1,25 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace OpenRGB.NET.Utils;
 #if DEBUG
 [NonCopyable]
 #endif
-internal ref struct SpanReader
+public ref struct SpanReader(ReadOnlySpan<byte> span)
 {
-    public ReadOnlySpan<byte> Span { get; }
-    public int Position { get; private set; }
+    private ReadOnlySpan<byte> Span { get; } = span;
+    private int Position { get; set; } = 0;
 
-    public SpanReader(ReadOnlySpan<byte> span)
+    internal T Read<T>() where T : unmanaged
     {
-        Span = span;
-        Position = 0;
-    }
-
-    public ushort ReadUInt16()
-    {
-        var value = BinaryPrimitives.ReadUInt16LittleEndian(Span[Position..]);
-        Position += sizeof(ushort);
+        var value = MemoryMarshal.Read<T>(Span[Position..]);
+        Position += Unsafe.SizeOf<T>();
         return value;
     }
-
-    public int ReadInt32()
-    {
-        var value = BinaryPrimitives.ReadInt32LittleEndian(Span[Position..]);
-        Position += sizeof(int);
-        return value;
-    }
-
-    public uint ReadUInt32()
-    {
-        var value = BinaryPrimitives.ReadUInt32LittleEndian(Span[Position..]);
-        Position += sizeof(uint);
-        return value;
-    }
-
+    
     public ReadOnlySpan<byte> ReadBytes(int length)
     {
         var value = Span[Position..(Position + length)];
@@ -45,16 +27,13 @@ internal ref struct SpanReader
         return value;
     }
 
-    public byte ReadByte()
-    {
-        var value = Span[Position];
-        Position += sizeof(byte);
-        return value;
-    }
-
     public string ReadLengthAndString()
     {
-        int length = ReadUInt16();
+        int length = Read<ushort>();
+        
+        if (length == 0)
+            return string.Empty;
+        
         return Encoding.ASCII.GetString(ReadBytes(length)[..^1]);
     }
 }

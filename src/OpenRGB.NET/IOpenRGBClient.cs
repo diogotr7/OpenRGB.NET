@@ -18,15 +18,10 @@ public interface IOpenRgbClient
     ProtocolVersion MaxSupportedProtocolVersion { get; }
 
     /// <summary>
-    ///     The protocol version to be used by this instance of <see cref="IOpenRgbClient" />
-    /// </summary>
-    ProtocolVersion ClientProtocolVersion { get; }
-
-    /// <summary>
     ///     The minimum common protocol version between this client and the connected server. Only set after the first
     ///     <see cref="Connect" />
     /// </summary>
-    ProtocolVersion CommonProtocolVersion { get; }
+    ProtocolVersion CurrentProtocolVersion { get; }
 
     /// <summary>
     ///     Triggered when the device list updates

@@ -69,13 +69,13 @@ public class Zone
     private static Zone ReadFrom(ref SpanReader reader, int deviceIndex, int zoneIndex, ProtocolVersion protocolVersion)
     {
         var name = reader.ReadLengthAndString();
-        var type = (ZoneType)reader.ReadUInt32();
-        var ledsMin = reader.ReadUInt32();
-        var ledsMax = reader.ReadUInt32();
-        var ledCount = reader.ReadUInt32();
-        var zoneMatrixLength = reader.ReadUInt16();
+        var type = (ZoneType)reader.Read<uint>();
+        var ledsMin = reader.Read<uint>();
+        var ledsMax = reader.Read<uint>();
+        var ledCount = reader.Read<uint>();
+        var zoneMatrixLength = reader.Read<ushort>();
         var matrixMap = zoneMatrixLength > 0 ? MatrixMap.ReadFrom(ref reader) : null;
-        var segments = protocolVersion.SupportsSegmentsAndPlugins ? Segment.ReadManyFrom(ref reader, reader.ReadUInt16()) : Array.Empty<Segment>();
+        var segments = protocolVersion.SupportsSegmentsAndPlugins ? Segment.ReadManyFrom(ref reader, reader.Read<ushort>()) : [];
 
         return new Zone(zoneIndex, deviceIndex, name, type, ledCount, ledsMin, ledsMax, matrixMap, segments);
     }
@@ -93,11 +93,11 @@ public class Zone
     internal void WriteTo(ref SpanWriter writer)
     {
         writer.WriteLengthAndString(Name);
-        writer.WriteUInt32((uint)Type);
-        writer.WriteUInt32(LedsMin);
-        writer.WriteUInt32(LedsMax);
-        writer.WriteUInt32(LedCount);
-        writer.WriteUInt16((ushort)(MatrixMap?.Length ?? 0));
+        writer.Write((uint)Type);
+        writer.Write(LedsMin);
+        writer.Write(LedsMax);
+        writer.Write(LedCount);
+        writer.Write((ushort)(MatrixMap?.Length ?? 0));
         MatrixMap?.WriteTo(ref writer);
     }
 }

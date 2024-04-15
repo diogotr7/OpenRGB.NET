@@ -32,7 +32,7 @@ public class Led
     private static Led ReadFrom(ref SpanReader reader, int index)
     {
         var name = reader.ReadLengthAndString();
-        var value = reader.ReadUInt32();
+        var value = reader.Read<uint>();
         
         return new Led(index, name, value);
     }

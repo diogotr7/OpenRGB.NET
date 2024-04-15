@@ -44,9 +44,9 @@ public class Segment
     private static Segment ReadFrom(ref SpanReader reader, int index)
     {
         var name = reader.ReadLengthAndString();
-        var type = (ZoneType)reader.ReadUInt32();
-        var start = reader.ReadUInt32();
-        var ledCount = reader.ReadUInt32();
+        var type = (ZoneType)reader.Read<uint>();
+        var start = reader.Read<uint>();
+        var ledCount = reader.Read<uint>();
 
         return new Segment(index, name, type, start, ledCount);
     }

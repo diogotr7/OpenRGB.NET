@@ -1,11 +1,12 @@
 using System;
+using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
 /// <summary>
 ///     Describes a Protocol Version
 /// </summary>
-public readonly struct ProtocolVersion
+public readonly struct ProtocolVersion : ISpanWritable
 {
     private ProtocolVersion(uint number,
         bool supportsVendorString, bool supportsProfileControls,
@@ -85,4 +86,11 @@ public readonly struct ProtocolVersion
         4 => V4,
         _ => throw new ArgumentOutOfRangeException(nameof(number), number, "Unknown protocol version")
     };
+
+    public int Length => 4;
+    
+    public void WriteTo(ref SpanWriter writer)
+    {
+        writer.Write(Number);
+    }
 }

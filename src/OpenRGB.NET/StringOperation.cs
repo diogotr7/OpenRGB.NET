@@ -84,14 +84,11 @@ internal readonly struct ProtocolVersionReader : ISpanReader<ProtocolVersion>
     }
 }
 
-internal readonly struct OpenRgbString(string value) : ISpanWritable, ISpanReader<string>
+internal readonly struct OpenRgbString(string value) : ISpanWritable
 {
     public string Value { get; } = value;
     public int Length => Value.Length + 1;
     public void WriteTo(ref SpanWriter writer) => writer.Write(Value);
-    public static string ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion = default, int index = default) => reader.ReadLengthAndString();
-    public static implicit operator string(OpenRgbString openRgbString) => openRgbString.Value;
-    public static implicit operator OpenRgbString(string value) => new(value);
 }
 
 internal readonly struct Primitive<T>(T value) : ISpanWritable where T : unmanaged
@@ -103,9 +100,9 @@ internal readonly struct Primitive<T>(T value) : ISpanWritable where T : unmanag
     public static implicit operator Primitive<T> (T value) => new(value);
 }
 
-internal readonly struct PrimitiveReader<T> : ISpanReader<Primitive<T>> where T : unmanaged
+internal readonly struct PrimitiveReader<T> : ISpanReader<T> where T : unmanaged
 {
-    public static Primitive<T> ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion = default, int index = default) => new(reader.Read<T>());
+    public static T ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion = default, int index = default) => reader.Read<T>();
 }
 
 internal readonly struct Args<T1, T2> : ISpanWritable where T1 : ISpanWritable where T2 : ISpanWritable

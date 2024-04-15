@@ -16,7 +16,7 @@ internal sealed class ConnectionManager : IDisposable
     private readonly Socket _socket;
     private readonly FrozenDictionary<CommandId, BlockingCollection<byte[]>> _pendingRequests;
     private Task? _readLoopTask;
-    
+
     public bool Connected => _socket.Connected;
 
     public ProtocolVersion CurrentProtocolVersion { get; private set; }
@@ -25,7 +25,7 @@ internal sealed class ConnectionManager : IDisposable
     {
         _cancellationTokenSource = new CancellationTokenSource();
         _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-        _socket.NoDelay = true;//TODO: is this necessary?
+        _socket.NoDelay = true; //TODO: is this necessary?
         _pendingRequests = Enum.GetValues<CommandId>().ToFrozenDictionary(c => c, _ => new BlockingCollection<byte[]>());
     }
 
@@ -38,7 +38,7 @@ internal sealed class ConnectionManager : IDisposable
         _readLoopTask = Task.Run(ReadLoop, _cancellationTokenSource.Token);
 
         Send(CommandId.SetClientName, 0, new OpenRgbString(name));
-        
+
         var commonProtocolVersion = NegotiateProtocolVersion(protocolVersionNumber);
         CurrentProtocolVersion = ProtocolVersion.FromNumber(commonProtocolVersion);
     }
@@ -125,9 +125,9 @@ internal sealed class ConnectionManager : IDisposable
 
         try
         {
-            version = Request<Primitive<uint>, PrimitiveReader<uint>, Primitive<uint>>(CommandId.RequestProtocolVersion, 0, maxSupportedProtocolVersion);
+            version = Request<Primitive<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0, maxSupportedProtocolVersion);
         }
-        catch (TimeoutException e)
+        catch (TimeoutException)
         {
             version = 0;
         }
@@ -139,17 +139,16 @@ internal sealed class ConnectionManager : IDisposable
 
     public void Dispose()
     {
-        //todo
         _cancellationTokenSource.Cancel();
         try
         {
             _readLoopTask?.Wait();
-
         }
         catch
         {
             //ignored
         }
+
         _cancellationTokenSource.Dispose();
         _socket.Dispose();
         _readLoopTask?.Dispose();

@@ -69,7 +69,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public int GetControllerCount()
     {
-        return _manager.Request<None, PrimitiveReader<int>, Primitive<int>>(CommandId.RequestControllerCount, 0, new None());
+        return _manager.Request<None, PrimitiveReader<int>, int>(CommandId.RequestControllerCount, 0, new None());
     }
 
     /// <inheritdoc />
@@ -126,18 +126,9 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (deviceId < 0)
             throw new ArgumentException("Invalid deviceId", nameof(deviceId));
 
-        // var bytes = MemoryMarshal.Cast<Color, byte>(colors);
-        var bytes = new byte[colors.Length * 4];
-        var writer = new SpanWriter(bytes);
-        for (var i = 0; i < colors.Length; i++)
-        {
-            var color = colors[i];
-            color.WriteTo(ref writer);
-        }
-
-        var length = PacketHeader.LENGTH + 4 + 2 + 4 * colors.Length;
-        //Note: this zero is supposed to be the size of the packet but it's unused by the server.
-        _manager.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<Primitive<uint>, Primitive<ushort>>((uint)length, (ushort)colors.Length), bytes);
+        var bytes = MemoryMarshal.Cast<Color, byte>(colors);
+        
+        _manager.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<Primitive<uint>, Primitive<ushort>>((uint)0, (ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -152,7 +143,6 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (zoneId < 0)
             throw new ArgumentException("Invalid zone id", nameof(zoneId));
 
-        //TODO: verify colors are 4 bytes and the same format
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
 
         _manager.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new Args<Primitive<uint>, Primitive<uint>, Primitive<ushort>>(0, (uint)zoneId, (ushort)colors.Length), bytes);

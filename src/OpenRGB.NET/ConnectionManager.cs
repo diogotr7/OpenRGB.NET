@@ -3,8 +3,6 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -101,24 +99,6 @@ internal sealed class ConnectionManager : IDisposable
 
         try
         {
-            var oldDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenRGB.NET.Old");
-            var desktop = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenRGB.NET.New");
-            Directory.CreateDirectory(desktop);
-        
-            var filename = 0;
-            while (File.Exists(Path.Combine(desktop, $"{filename}.bin")))
-                filename++;
-        
-            File.WriteAllBytes(Path.Combine(desktop, $"{filename}.bin"), buffer.ToArray());
-            
-            //check if the buffer is correct
-            if(File.Exists(Path.Combine(oldDir, $"{filename}.bin")))
-            {
-                var old = File.ReadAllBytes(Path.Combine(oldDir, $"{filename}.bin"));
-                if (!old.SequenceEqual(buffer.ToArray()))
-                    Debugger.Break();
-            }
-            
             _socket.SendAll(buffer);
         }
         finally

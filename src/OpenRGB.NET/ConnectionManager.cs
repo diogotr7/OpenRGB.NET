@@ -1,7 +1,8 @@
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
-using System.Collections.Frozen;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ internal sealed class ConnectionManager : IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly Socket _socket;
-    private readonly FrozenDictionary<CommandId, BlockingCollection<byte[]>> _pendingRequests;
+    private readonly Dictionary<CommandId, BlockingCollection<byte[]>> _pendingRequests;
     private Task? _readLoopTask;
 
     public bool Connected => _socket.Connected;
@@ -25,7 +26,8 @@ internal sealed class ConnectionManager : IDisposable
         _cancellationTokenSource = new CancellationTokenSource();
         _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
         _socket.NoDelay = true; //TODO: is this necessary?
-        _pendingRequests = Enum.GetValues<CommandId>().ToFrozenDictionary(c => c, _ => new BlockingCollection<byte[]>());
+        _pendingRequests = Enum.GetValues(typeof(CommandId)).Cast<CommandId>()
+            .ToDictionary(c => c, _ => new BlockingCollection<byte[]>());
     }
 
     public void Connect(string name, string ip, int port, int timeoutMs, uint protocolVersionNumber = 4)
@@ -97,20 +99,20 @@ internal sealed class ConnectionManager : IDisposable
         }
     }
 
-    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId) where TReader : ISpanReader<TResult>
+    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId, TReader tReader) where TReader : ISpanReader<TResult>
     {
         var reader = new SpanReader(_pendingRequests[command].Take(_cancellationTokenSource.Token));
         //this deviceId here is a bit hacky, it's used because some Models store their own index
-        return TReader.ReadFrom(ref reader, CurrentProtocolVersion, (int)deviceId);
+        return tReader.ReadFrom(ref reader, CurrentProtocolVersion, (int)deviceId);
     }
 
-    public TResult Request<TRequest, TReader, TResult>(CommandId command, uint deviceId, TRequest requestData,
+    public TResult Request<TRequest, TReader, TResult>(CommandId command, uint deviceId, TRequest requestData, TReader tReader,
         ReadOnlySpan<byte> additionalData = default)
         where TRequest : ISpanWritable
         where TReader : ISpanReader<TResult>
     {
         Send(command, deviceId, requestData, additionalData);
-        return Receive<TReader, TResult>(command, deviceId);
+        return Receive<TReader, TResult>(command, deviceId, tReader);
     }
 
     private uint NegotiateProtocolVersion(uint maxSupportedProtocolVersion)
@@ -122,7 +124,7 @@ internal sealed class ConnectionManager : IDisposable
         try
         {
             version = Request<Args<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0,
-                new Args<uint>(maxSupportedProtocolVersion));
+                new Args<uint>(maxSupportedProtocolVersion), new PrimitiveReader<uint>());
         }
         catch (TimeoutException)
         {

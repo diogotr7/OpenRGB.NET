@@ -4,7 +4,7 @@ namespace OpenRGB.NET;
 
 internal readonly struct PluginsReader : ISpanReader<Plugin[]>
 {
-    public static Plugin[] ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
+    public Plugin[] ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
     {
         var dataSize = reader.Read<uint>();
         
@@ -27,7 +27,7 @@ internal readonly struct PluginsReader : ISpanReader<Plugin[]>
 
 internal readonly struct ProfilesReader : ISpanReader<string[]>
 {
-    public static string[] ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
+    public string[] ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
     {
         var dataSize = reader.Read<uint>();
         
@@ -44,7 +44,7 @@ internal readonly struct ProfilesReader : ISpanReader<string[]>
 
 internal readonly struct DeviceReader : ISpanReader<Device>
 {
-    public static Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, int deviceIndex)
+    public Device ReadFrom(ref SpanReader reader, ProtocolVersion protocol, int deviceIndex)
     {
         var dataSize = reader.Read<uint>();
 
@@ -73,7 +73,7 @@ internal readonly struct DeviceReader : ISpanReader<Device>
 
 internal readonly struct ProtocolVersionReader : ISpanReader<ProtocolVersion>
 {
-    public static ProtocolVersion ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
+    public ProtocolVersion ReadFrom(ref SpanReader reader, ProtocolVersion p = default, int i = default)
     {
         return ProtocolVersion.FromNumber(reader.Read<uint>());
     }
@@ -81,5 +81,5 @@ internal readonly struct ProtocolVersionReader : ISpanReader<ProtocolVersion>
 
 internal readonly struct PrimitiveReader<T> : ISpanReader<T> where T : unmanaged
 {
-    public static T ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion = default, int index = default) => reader.Read<T>();
+    public T ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion = default, int index = default) => reader.Read<T>();
 }

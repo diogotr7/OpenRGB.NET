@@ -26,7 +26,7 @@ public readonly record struct Color(byte R = 0, byte G = 0, byte B = 0)
     /// </summary>
     public byte B { get; } = B;
 
-    //Added for padding, so Color fits within 4 bytes. TODO verify byte order
+    //Added for padding, so Color fits within 4 bytes.
     private readonly byte UnusedAlpha = 0;
 
     private static Color ReadFrom(ref SpanReader reader)

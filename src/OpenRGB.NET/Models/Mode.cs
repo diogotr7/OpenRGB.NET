@@ -6,7 +6,7 @@ namespace OpenRGB.NET;
 /// <summary>
 ///     Mode class containing the parameters one mode has.
 /// </summary>
-public class Mode : ISpanWritable
+public class Mode
 {
     private Mode(ProtocolVersion protocolVersion, int index, string name, int value, ModeFlags flags, uint speedMin,
         uint speedMax, uint brightnessMin, uint brightnessMax, uint colorMin, uint colorMax, uint speed, 
@@ -197,51 +197,5 @@ public class Mode : ISpanWritable
             modes[i] = ReadFrom(ref reader, protocolVersion, i);
 
         return modes;
-    }
-
-    public int Length
-    {
-        get
-        {
-            var size = (
-                sizeof(int) * 2 +
-                sizeof(uint) * 9 +
-                sizeof(ushort) * 2 +
-                sizeof(uint) * Colors.Length +
-                Name.Length + 1);
-
-            if (ProtocolVersion.SupportsBrightnessAndSaveMode) size += sizeof(uint) * 3;
-
-            return size;
-        }
-    }
-
-    public void WriteTo(ref SpanWriter writer)
-    {
-        writer.WriteLengthAndString(Name);
-        writer.Write(Value);
-        writer.Write((uint)Flags);
-        writer.Write(SpeedMin);
-        writer.Write(SpeedMax);
-
-        if (ProtocolVersion.SupportsBrightnessAndSaveMode)
-        {
-            writer.Write(BrightnessMin);
-            writer.Write(BrightnessMax);
-        }
-
-        writer.Write(ColorMin);
-        writer.Write(ColorMax);
-        writer.Write(Speed);
-
-        if (ProtocolVersion.SupportsBrightnessAndSaveMode)
-            writer.Write(Brightness);
-
-        writer.Write((uint)Direction);
-        writer.Write((uint)ColorMode);
-        writer.Write((ushort)Colors.Length);
-
-        foreach (var color in Colors)
-            color.WriteTo(ref writer);
     }
 }

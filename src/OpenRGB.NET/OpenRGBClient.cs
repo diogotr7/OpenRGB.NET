@@ -69,7 +69,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public int GetControllerCount()
     {
-        return _manager.Request<None, PrimitiveReader<int>, int>(CommandId.RequestControllerCount, 0, new None());
+        return _manager.Request<None, PrimitiveReader<int>, int>(CommandId.RequestControllerCount, 0, new None(), new PrimitiveReader<int>());
     }
 
     /// <inheritdoc />
@@ -78,7 +78,8 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (deviceId < 0)
             throw new ArgumentException("Unexpected device Id", nameof(deviceId));
 
-        return _manager.Request<ProtocolVersion, DeviceReader, Device>(CommandId.RequestControllerData, (uint)deviceId, _manager.CurrentProtocolVersion);
+        return _manager.Request<ProtocolVersionWriter, DeviceReader, Device>(CommandId.RequestControllerData, (uint)deviceId,
+            new ProtocolVersionWriter(_manager.CurrentProtocolVersion), new DeviceReader());
     }
 
     /// <inheritdoc />
@@ -99,7 +100,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (!CurrentProtocolVersion.SupportsProfileControls)
             throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
 
-        return _manager.Request<None, ProfilesReader, string[]>(CommandId.RequestProfiles, 0, new None());
+        return _manager.Request<None, ProfilesReader, string[]>(CommandId.RequestProfiles, 0, new None(), new ProfilesReader());
     }
 
     /// <inheritdoc />
@@ -108,7 +109,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (!CurrentProtocolVersion.SupportsSegmentsAndPlugins)
             throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
 
-        return _manager.Request<None, PluginsReader, Plugin[]>(CommandId.RequestPlugins, 0, new None());
+        return _manager.Request<None, PluginsReader, Plugin[]>(CommandId.RequestPlugins, 0, new None(), new PluginsReader());
     }
 
     /// <inheritdoc />
@@ -221,7 +222,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             targetMode.SetColors(colors);
         }
 
-        _manager.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, targetMode));
+        _manager.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, new ModeWriter(targetMode)));
     }
 
     /// <inheritdoc />
@@ -234,7 +235,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var targetMode = targetDevice.Modes[modeId];
 
-        _manager.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, targetMode));
+        _manager.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, new ModeWriter(targetMode)));
     }
 
     /// <inheritdoc />

@@ -2,7 +2,6 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,13 +42,17 @@ internal sealed class ConnectionManager : IDisposable
         CurrentProtocolVersion = ProtocolVersion.FromNumber(commonProtocolVersion);
     }
 
-    public async Task ReadLoop()
+    private async Task ReadLoop()
     {
+        var headerBuffer = new byte[PacketHeader.LENGTH];
+
         while (!_cancellationTokenSource.IsCancellationRequested && _socket.Connected)
         {
             try
             {
-                var header = await ReadHeader();
+                await _socket.ReceiveAllAsync(headerBuffer, _cancellationTokenSource.Token);
+                var header = PacketHeader.FromSpan(headerBuffer);
+
                 if (header.Command == CommandId.DeviceListUpdated)
                 {
                     //TODO: is this the best way to do this?
@@ -69,23 +72,10 @@ internal sealed class ConnectionManager : IDisposable
         }
     }
 
-    public async Task<PacketHeader> ReadHeader()
+    public void Send<TRequest>(CommandId command, uint deviceId, TRequest requestData, ReadOnlySpan<byte> additionalData = default)
+        where TRequest : ISpanWritable
     {
-        var rent = ArrayPool<byte>.Shared.Rent(PacketHeader.LENGTH);
-        try
-        {
-            await _socket.ReceiveAllAsync(rent.AsMemory(0, PacketHeader.LENGTH), _cancellationTokenSource.Token);
-            return PacketHeader.FromSpan(rent);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(rent);
-        }
-    }
-
-    public void Send<T>(CommandId command, uint deviceId, T data, ReadOnlySpan<byte> additionalData = default) where T : ISpanWritable
-    {
-        var dataLength = data.Length + additionalData.Length;
+        var dataLength = requestData.Length + additionalData.Length;
         var totalLength = PacketHeader.LENGTH + dataLength;
         var header = new PacketHeader(deviceId, command, (uint)dataLength);
 
@@ -94,7 +84,7 @@ internal sealed class ConnectionManager : IDisposable
         var writer = new SpanWriter(buffer);
 
         header.WriteTo(ref writer);
-        data.WriteTo(ref writer);
+        requestData.WriteTo(ref writer);
         writer.Write(additionalData);
 
         try
@@ -107,14 +97,20 @@ internal sealed class ConnectionManager : IDisposable
         }
     }
 
-    public TResult Request<TRequest, TReader, TResult>(CommandId command, uint deviceId, TRequest requestData)
-        where TRequest : ISpanWritable
-        where TReader : ISpanReader<TResult>
+    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId) where TReader : ISpanReader<TResult>
     {
-        Send(command, deviceId, requestData);
         var reader = new SpanReader(_pendingRequests[command].Take(_cancellationTokenSource.Token));
         //this deviceId here is a bit hacky, it's used because some Models store their own index
         return TReader.ReadFrom(ref reader, CurrentProtocolVersion, (int)deviceId);
+    }
+
+    public TResult Request<TRequest, TReader, TResult>(CommandId command, uint deviceId, TRequest requestData,
+        ReadOnlySpan<byte> additionalData = default)
+        where TRequest : ISpanWritable
+        where TReader : ISpanReader<TResult>
+    {
+        Send(command, deviceId, requestData, additionalData);
+        return Receive<TReader, TResult>(command, deviceId);
     }
 
     private uint NegotiateProtocolVersion(uint maxSupportedProtocolVersion)
@@ -125,7 +121,8 @@ internal sealed class ConnectionManager : IDisposable
 
         try
         {
-            version = Request<Primitive<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0, maxSupportedProtocolVersion);
+            version = Request<Args<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0,
+                new Args<uint>(maxSupportedProtocolVersion));
         }
         catch (TimeoutException)
         {

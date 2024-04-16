@@ -114,7 +114,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public void ResizeZone(int deviceId, int zoneId, int size)
     {
-        _manager.Send(CommandId.ResizeZone, (uint)deviceId, new Args<Primitive<uint>, Primitive<uint>>((uint)zoneId, (uint)size));
+        _manager.Send(CommandId.ResizeZone, (uint)deviceId, new Args<uint, uint>((uint)zoneId, (uint)size));
     }
 
     /// <inheritdoc />
@@ -128,7 +128,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
         
-        _manager.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<Primitive<uint>, Primitive<ushort>>((uint)0, (ushort)colors.Length), bytes);
+        _manager.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<uint, ushort>((uint)0, (ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -145,7 +145,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
 
-        _manager.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new Args<Primitive<uint>, Primitive<uint>, Primitive<ushort>>(0, (uint)zoneId, (ushort)colors.Length), bytes);
+        _manager.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new Args<uint, uint, ushort>(0, (uint)zoneId, (ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -157,7 +157,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (ledId < 0)
             throw new ArgumentException("Invalid led id", nameof(ledId));
 
-        _manager.Send(CommandId.UpdateSingleLed, (uint)deviceId, new Args<Primitive<uint>, Primitive<Color>>((uint)ledId, color));
+        _manager.Send(CommandId.UpdateSingleLed, (uint)deviceId, new Args<uint, Color>((uint)ledId, color));
     }
 
     /// <inheritdoc />
@@ -221,7 +221,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             targetMode.SetColors(colors);
         }
 
-        _manager.Send(CommandId.UpdateMode, (uint)deviceId, new Args<Primitive<uint>, Primitive<uint>, Mode>(0, (uint)modeId, targetMode));
+        _manager.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, targetMode));
     }
 
     /// <inheritdoc />
@@ -234,7 +234,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var targetMode = targetDevice.Modes[modeId];
 
-        _manager.Send(CommandId.SaveMode, (uint)deviceId, new Args<Primitive<uint>, Primitive<uint>, Mode>(0, (uint)modeId, targetMode));
+        _manager.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, targetMode));
     }
 
     /// <inheritdoc />
@@ -243,7 +243,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (!CurrentProtocolVersion.SupportsSegmentsAndPlugins)
             throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
 
-        _manager.Send(CommandId.PluginSpecific, (uint)pluginId, new Primitive<uint>((uint)pluginPacketType), data);
+        _manager.Send(CommandId.PluginSpecific, (uint)pluginId, new Args<uint>((uint)pluginPacketType), data);
     }
 
     #endregion

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -12,10 +13,10 @@ public ref struct SpanWriter(Span<byte> span)
     public Span<byte> Span { get; } = span;
     public int Position { get; private set; } = 0;
     
-    public unsafe void Write<T>(T value) where T : unmanaged
+    public void Write<T>(T value) where T : unmanaged
     {
         MemoryMarshal.Write(Span[Position..], in value);
-        Position += sizeof(T);
+        Position += Unsafe.SizeOf<T>();
     }
 
     public void Write(ReadOnlySpan<byte> span)

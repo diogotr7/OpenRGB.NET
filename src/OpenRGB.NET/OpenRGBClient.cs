@@ -21,6 +21,9 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
     /// <inheritdoc />
     public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MaxProtocolNumber);
+    
+    /// <inheritdoc />
+    public ProtocolVersion ClientProtocolVersion => ProtocolVersion.FromNumber(_protocolVersionNumber);
 
     /// <inheritdoc />
     public ProtocolVersion CommonProtocolVersion => _connection.CurrentProtocolVersion;

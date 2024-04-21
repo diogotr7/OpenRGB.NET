@@ -21,7 +21,7 @@ public interface IOpenRgbClient
     ///     The minimum common protocol version between this client and the connected server. Only set after the first
     ///     <see cref="Connect" />
     /// </summary>
-    ProtocolVersion CurrentProtocolVersion { get; }
+    ProtocolVersion CommonProtocolVersion { get; }
 
     /// <summary>
     ///     Triggered when the device list updates

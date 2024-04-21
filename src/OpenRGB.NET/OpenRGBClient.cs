@@ -23,7 +23,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MaxProtocolNumber);
 
     /// <inheritdoc />
-    public ProtocolVersion CurrentProtocolVersion => _connection.CurrentProtocolVersion;
+    public ProtocolVersion CommonProtocolVersion => _connection.CurrentProtocolVersion;
 
     /// <inheritdoc />
     public event EventHandler<EventArgs>? DeviceListUpdated;
@@ -95,8 +95,8 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public string[] GetProfiles()
     {
-        if (!CurrentProtocolVersion.SupportsProfileControls)
-            throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
+        if (!CommonProtocolVersion.SupportsProfileControls)
+            throw new NotSupportedException($"Not supported on protocol version {CommonProtocolVersion.Number}");
 
         return _connection.Request<EmptyArg, ProfilesReader, string[]>(CommandId.RequestProfiles, 0, new EmptyArg());
     }
@@ -104,8 +104,8 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public Plugin[] GetPlugins()
     {
-        if (!CurrentProtocolVersion.SupportsSegmentsAndPlugins)
-            throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
+        if (!CommonProtocolVersion.SupportsSegmentsAndPlugins)
+            throw new NotSupportedException($"Not supported on protocol version {CommonProtocolVersion.Number}");
 
         return _connection.Request<EmptyArg, PluginsReader, Plugin[]>(CommandId.RequestPlugins, 0, new EmptyArg());
     }
@@ -239,8 +239,8 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public void PluginSpecific(int pluginId, int pluginPacketType, ReadOnlySpan<byte> data)
     {
-        if (!CurrentProtocolVersion.SupportsSegmentsAndPlugins)
-            throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
+        if (!CommonProtocolVersion.SupportsSegmentsAndPlugins)
+            throw new NotSupportedException($"Not supported on protocol version {CommonProtocolVersion.Number}");
 
         _connection.Send(CommandId.PluginSpecific, (uint)pluginId, new Args<uint>((uint)pluginPacketType), data);
     }

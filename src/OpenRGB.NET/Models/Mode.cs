@@ -1,5 +1,4 @@
 ﻿using System;
-using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
@@ -8,7 +7,7 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Mode
 {
-    private Mode(ProtocolVersion protocolVersion, int index, string name, int value, ModeFlags flags, uint speedMin,
+    internal Mode(ProtocolVersion protocolVersion, int index, string name, int value, ModeFlags flags, uint speedMin,
         uint speedMax, uint brightnessMin, uint brightnessMax, uint colorMin, uint colorMax, uint speed, 
         uint brightness, Direction direction, ColorMode colorMode, Color[] colors)
     {
@@ -164,38 +163,5 @@ public class Mode
     public void SetColors(Color[] newColors)
     {
         Colors = newColors;
-    }
-
-    internal static Mode ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion, int index)
-    {
-        var name = reader.ReadLengthAndString();
-        var modeValue = reader.Read<int>();
-        var modeFlags = (ModeFlags)reader.Read<uint>();
-        var speedMin = reader.Read<uint>();
-        var speedMax = reader.Read<uint>();
-        var brightMin = protocolVersion.SupportsBrightnessAndSaveMode ? reader.Read<uint>() : 0;
-        var brightMax = protocolVersion.SupportsBrightnessAndSaveMode ? reader.Read<uint>() : 0;
-        var colorMin = reader.Read<uint>();
-        var colorMax = reader.Read<uint>();
-        var speed = reader.Read<uint>();
-        var brightness = protocolVersion.SupportsBrightnessAndSaveMode ? reader.Read<uint>() : 0;
-        var direction = reader.Read<uint>();
-        var colorMode = (ColorMode)reader.Read<uint>();
-        var colorCount = reader.Read<ushort>();
-        var colors = Color.ReadManyFrom(ref reader, colorCount);
-
-        return new Mode(protocolVersion, index, name, modeValue, modeFlags, speedMin, speedMax,
-            brightMin, brightMax, colorMin, colorMax, speed, brightness,
-            (Direction)direction, colorMode, colors);
-    }
-
-    internal static Mode[] ReadManyFrom(ref SpanReader reader, ushort numModes, ProtocolVersion protocolVersion)
-    {
-        var modes = new Mode[numModes];
-
-        for (var i = 0; i < numModes; i++)
-            modes[i] = ReadFrom(ref reader, protocolVersion, i);
-
-        return modes;
     }
 }

@@ -1,6 +1,4 @@
-﻿using OpenRGB.NET.Utils;
-
-namespace OpenRGB.NET;
+﻿namespace OpenRGB.NET;
 
 /// <summary>
 ///     Represents a Plugin installed on the OpenRGB server.

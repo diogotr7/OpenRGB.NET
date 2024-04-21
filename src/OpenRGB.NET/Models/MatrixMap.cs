@@ -1,5 +1,3 @@
-using OpenRGB.NET.Utils;
-
 namespace OpenRGB.NET;
 
 /// <summary>
@@ -7,7 +5,7 @@ namespace OpenRGB.NET;
 /// </summary>
 public class MatrixMap
 {
-    private MatrixMap(uint height, uint width, uint[,] matrix)
+    internal MatrixMap(uint height, uint width, uint[,] matrix)
     {
         Height = height;
         Width = width;
@@ -28,35 +26,4 @@ public class MatrixMap
     ///     The matrix.
     /// </summary>
     public uint[,] Matrix { get; }
-
-    internal uint Length => Height * Width * 4 + 8;
-
-    /// <summary>
-    ///     Decodes a byte array into a matrix map
-    /// </summary>
-    /// <param name="reader"></param>
-    internal static MatrixMap ReadFrom(ref SpanReader reader)
-    {
-        var height = reader.Read<uint>();
-
-        var width = reader.Read<uint>();
-
-        var matrix = new uint[height, width];
-
-        for (var i = 0; i < height; i++)
-            for (var j = 0; j < width; j++)
-                matrix[i, j] = reader.Read<uint>();
-
-        return new MatrixMap(height, width, matrix);
-    }
-
-    internal void WriteTo(ref SpanWriter writer)
-    {
-        writer.Write(Height);
-        writer.Write(Width);
-
-        for (var i = 0; i < Height; i++)
-            for (var j = 0; j < Width; j++)
-                writer.Write(Matrix[i, j]);
-    }
 }

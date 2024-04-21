@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -28,13 +27,14 @@ internal unsafe ref struct SpanWriter(Span<byte> span)
     public void WriteLengthAndString(string value)
     {
         Write((ushort)(value.Length + 1));
-        Write(Encoding.ASCII.GetBytes(value));
-        Write<byte>(0);
+        Write(value);
     }
     
     public void Write(string value)
     {
-        Write(Encoding.ASCII.GetBytes(value));
+        var byteCount = Encoding.ASCII.GetByteCount(value.AsSpan());
+        Encoding.ASCII.GetBytes(value, Span.Slice(Position, byteCount));
+        Position += byteCount;
         Write<byte>(0);
     }
 }

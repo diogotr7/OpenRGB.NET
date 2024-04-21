@@ -1,6 +1,3 @@
-using System;
-using OpenRGB.NET.Utils;
-
 namespace OpenRGB.NET;
 
 /// <summary>

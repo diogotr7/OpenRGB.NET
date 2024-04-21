@@ -1,7 +1,5 @@
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
-using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
@@ -16,16 +14,16 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     private readonly int _port;
     private readonly int _timeoutMs;
     private readonly uint _protocolVersionNumber;
-    private readonly ConnectionManager _manager;
+    private readonly OpenRgbConnection _connection;
 
     /// <inheritdoc />
-    public bool Connected => _manager.Connected;
+    public bool Connected => _connection.Connected;
 
     /// <inheritdoc />
     public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MaxProtocolNumber);
 
     /// <inheritdoc />
-    public ProtocolVersion CurrentProtocolVersion => _manager.CurrentProtocolVersion;
+    public ProtocolVersion CurrentProtocolVersion => _connection.CurrentProtocolVersion;
 
     /// <inheritdoc />
     public event EventHandler<EventArgs>? DeviceListUpdated;
@@ -46,7 +44,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         _name = name;
         _timeoutMs = timeoutMs;
         _protocolVersionNumber = protocolVersionNumber;
-        _manager = new();
+        _connection = new OpenRgbConnection(DeviceListUpdated);
 
         if (protocolVersionNumber > MaxProtocolNumber)
             throw new ArgumentException("Client protocol version provided higher than supported.",
@@ -61,7 +59,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (Connected)
             return;
 
-        _manager.Connect(_name, _ip, _port, _timeoutMs, _protocolVersionNumber);
+        _connection.Connect(_name, _ip, _port, _timeoutMs, _protocolVersionNumber);
     }
 
     #region API
@@ -69,7 +67,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public int GetControllerCount()
     {
-        return _manager.Request<None, PrimitiveReader<int>, int>(CommandId.RequestControllerCount, 0, new None(), new PrimitiveReader<int>());
+        return _connection.Request<EmptyArg, PrimitiveReader<int>, int>(CommandId.RequestControllerCount, 0, new EmptyArg());
     }
 
     /// <inheritdoc />
@@ -78,8 +76,8 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (deviceId < 0)
             throw new ArgumentException("Unexpected device Id", nameof(deviceId));
 
-        return _manager.Request<ProtocolVersionWriter, DeviceReader, Device>(CommandId.RequestControllerData, (uint)deviceId,
-            new ProtocolVersionWriter(_manager.CurrentProtocolVersion), new DeviceReader());
+        return _connection.Request<ProtocolVersionArg, DeviceReader, Device>(CommandId.RequestControllerData, (uint)deviceId,
+            new ProtocolVersionArg(_connection.CurrentProtocolVersion));
     }
 
     /// <inheritdoc />
@@ -100,7 +98,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (!CurrentProtocolVersion.SupportsProfileControls)
             throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
 
-        return _manager.Request<None, ProfilesReader, string[]>(CommandId.RequestProfiles, 0, new None(), new ProfilesReader());
+        return _connection.Request<EmptyArg, ProfilesReader, string[]>(CommandId.RequestProfiles, 0, new EmptyArg());
     }
 
     /// <inheritdoc />
@@ -109,13 +107,13 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (!CurrentProtocolVersion.SupportsSegmentsAndPlugins)
             throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
 
-        return _manager.Request<None, PluginsReader, Plugin[]>(CommandId.RequestPlugins, 0, new None(), new PluginsReader());
+        return _connection.Request<EmptyArg, PluginsReader, Plugin[]>(CommandId.RequestPlugins, 0, new EmptyArg());
     }
 
     /// <inheritdoc />
     public void ResizeZone(int deviceId, int zoneId, int size)
     {
-        _manager.Send(CommandId.ResizeZone, (uint)deviceId, new Args<uint, uint>((uint)zoneId, (uint)size));
+        _connection.Send(CommandId.ResizeZone, (uint)deviceId, new Args<uint, uint>((uint)zoneId, (uint)size));
     }
 
     /// <inheritdoc />
@@ -128,8 +126,8 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             throw new ArgumentException("Invalid deviceId", nameof(deviceId));
 
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
-        
-        _manager.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<uint, ushort>((uint)0, (ushort)colors.Length), bytes);
+
+        _connection.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<uint, ushort>(0, (ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -146,7 +144,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
 
-        _manager.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new Args<uint, uint, ushort>(0, (uint)zoneId, (ushort)colors.Length), bytes);
+        _connection.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new Args<uint, uint, ushort>(0, (uint)zoneId, (ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -158,31 +156,31 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (ledId < 0)
             throw new ArgumentException("Invalid led id", nameof(ledId));
 
-        _manager.Send(CommandId.UpdateSingleLed, (uint)deviceId, new Args<uint, Color>((uint)ledId, color));
+        _connection.Send(CommandId.UpdateSingleLed, (uint)deviceId, new Args<uint, Color>((uint)ledId, color));
     }
 
     /// <inheritdoc />
     public void SetCustomMode(int deviceId)
     {
-        _manager.Send(CommandId.SetCustomMode, (uint)deviceId, new None());
+        _connection.Send(CommandId.SetCustomMode, (uint)deviceId, new EmptyArg());
     }
 
     /// <inheritdoc />
     public void LoadProfile(string profile)
     {
-        _manager.Send(CommandId.LoadProfile, 0, new OpenRgbString(profile));
+        _connection.Send(CommandId.LoadProfile, 0, new StringArg(profile));
     }
 
     /// <inheritdoc />
     public void SaveProfile(string profile)
     {
-        _manager.Send(CommandId.SaveProfile, 0, new OpenRgbString(profile));
+        _connection.Send(CommandId.SaveProfile, 0, new StringArg(profile));
     }
 
     /// <inheritdoc />
     public void DeleteProfile(string profile)
     {
-        _manager.Send(CommandId.DeleteProfile, 0, new OpenRgbString(profile));
+        _connection.Send(CommandId.DeleteProfile, 0, new StringArg(profile));
     }
 
     /// <inheritdoc />
@@ -222,7 +220,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             targetMode.SetColors(colors);
         }
 
-        _manager.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, new ModeWriter(targetMode)));
+        _connection.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperationArg(0, (uint)modeId, new ModeArg(targetMode)));
     }
 
     /// <inheritdoc />
@@ -235,7 +233,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var targetMode = targetDevice.Modes[modeId];
 
-        _manager.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperation(0, (uint)modeId, new ModeWriter(targetMode)));
+        _connection.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperationArg(0, (uint)modeId, new ModeArg(targetMode)));
     }
 
     /// <inheritdoc />
@@ -244,7 +242,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         if (!CurrentProtocolVersion.SupportsSegmentsAndPlugins)
             throw new NotSupportedException($"Not supported on protocol version {CurrentProtocolVersion.Number}");
 
-        _manager.Send(CommandId.PluginSpecific, (uint)pluginId, new Args<uint>((uint)pluginPacketType), data);
+        _connection.Send(CommandId.PluginSpecific, (uint)pluginId, new Args<uint>((uint)pluginPacketType), data);
     }
 
     #endregion
@@ -252,6 +250,6 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     /// <inheritdoc />
     public void Dispose()
     {
-        _manager.Dispose();
+        _connection.Dispose();
     }
 }

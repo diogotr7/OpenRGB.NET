@@ -10,7 +10,7 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
-internal sealed class ConnectionManager : IDisposable
+internal sealed class OpenRgbConnection : IDisposable
 {
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly Socket _socket;
@@ -20,14 +20,18 @@ internal sealed class ConnectionManager : IDisposable
     public bool Connected => _socket.Connected;
 
     public ProtocolVersion CurrentProtocolVersion { get; private set; }
+    
+    public EventHandler<EventArgs>? DeviceListUpdated { get; set; }
 
-    public ConnectionManager()
+    public OpenRgbConnection(EventHandler<EventArgs>? OnDeviceListUpdated)
     {
         _cancellationTokenSource = new CancellationTokenSource();
         _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-        _socket.NoDelay = true; //TODO: is this necessary?
+        _socket.NoDelay = true; //Send all data immediately, we rely on the order of packets
         _pendingRequests = Enum.GetValues(typeof(CommandId)).Cast<CommandId>()
             .ToDictionary(c => c, _ => new BlockingCollection<byte[]>());
+        
+        DeviceListUpdated = OnDeviceListUpdated;
     }
 
     public void Connect(string name, string ip, int port, int timeoutMs, uint protocolVersionNumber = 4)
@@ -38,7 +42,7 @@ internal sealed class ConnectionManager : IDisposable
         _socket.Connect(ip, port, timeoutMs, _cancellationTokenSource.Token);
         _readLoopTask = Task.Run(ReadLoop, _cancellationTokenSource.Token);
 
-        Send(CommandId.SetClientName, 0, new OpenRgbString(name));
+        Send(CommandId.SetClientName, 0, new StringArg(name));
 
         var commonProtocolVersion = NegotiateProtocolVersion(protocolVersionNumber);
         CurrentProtocolVersion = ProtocolVersion.FromNumber(commonProtocolVersion);
@@ -57,8 +61,17 @@ internal sealed class ConnectionManager : IDisposable
 
                 if (header.Command == CommandId.DeviceListUpdated)
                 {
-                    //TODO: is this the best way to do this?
-                    //DeviceListUpdated?.Invoke(this, EventArgs.Empty);
+                    _ = Task.Run(() =>
+                    {
+                        try
+                        {
+                            DeviceListUpdated?.Invoke(this, EventArgs.Empty);
+                        }
+                        catch
+                        {
+                            //ignored
+                        }
+                    });
                 }
                 else
                 {
@@ -73,6 +86,7 @@ internal sealed class ConnectionManager : IDisposable
             }
         }
     }
+
 
     public void Send<TRequest>(CommandId command, uint deviceId, TRequest requestData, ReadOnlySpan<byte> additionalData = default)
         where TRequest : ISpanWritable
@@ -98,18 +112,18 @@ internal sealed class ConnectionManager : IDisposable
             ArrayPool<byte>.Shared.Return(rent);
         }
     }
-
-    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId, TReader tReader) where TReader : ISpanReader<TResult>
+    
+    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId, TReader tReader) where TReader : struct, ISpanReader<TResult>
     {
         var reader = new SpanReader(_pendingRequests[command].Take(_cancellationTokenSource.Token));
         //this deviceId here is a bit hacky, it's used because some Models store their own index
         return tReader.ReadFrom(ref reader, CurrentProtocolVersion, (int)deviceId);
     }
 
-    public TResult Request<TRequest, TReader, TResult>(CommandId command, uint deviceId, TRequest requestData, TReader tReader,
+    public TResult Request<TArgument, TReader, TResult>(CommandId command, uint deviceId, TArgument requestData, TReader tReader = default,
         ReadOnlySpan<byte> additionalData = default)
-        where TRequest : ISpanWritable
-        where TReader : ISpanReader<TResult>
+        where TArgument : ISpanWritable
+        where TReader : struct, ISpanReader<TResult>
     {
         Send(command, deviceId, requestData, additionalData);
         return Receive<TReader, TResult>(command, deviceId, tReader);

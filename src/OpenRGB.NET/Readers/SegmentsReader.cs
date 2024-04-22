@@ -2,7 +2,7 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
-internal class SegmentsReader : ISpanReader<Segment[]>
+internal readonly struct SegmentsReader : ISpanReader<Segment[]>
 {
     public Segment[] ReadFrom(ref SpanReader reader, ProtocolVersion? protocolVersion = default, int? index = default, int? outerCount = default)
     {

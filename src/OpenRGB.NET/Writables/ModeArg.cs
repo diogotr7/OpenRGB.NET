@@ -9,14 +9,14 @@ internal readonly record struct ModeArg(Mode Mode) : ISpanWritable
     {
         get
         {
-            var size = (
-                sizeof(int) * 2 +
-                sizeof(uint) * 9 +
-                sizeof(ushort) * 2 +
-                sizeof(uint) * Mode.Colors.Length +
-                Mode.Name.Length + 1);
-
-            if (Mode.ProtocolVersion.SupportsBrightnessAndSaveMode) size += sizeof(uint) * 3;
+            var size = 0;
+            
+            size += sizeof(ushort) * 2;// Name Length, Colors Length
+            size += sizeof(uint) * 9;// Value, SpeedMin, SpeedMax, ColorMin, ColorMax, Speed, Direction, ColorMode, Flags
+            size += Mode.Name.Length + 1;// Name
+            size += sizeof(uint) * Mode.Colors.Length;// Colors
+            if (Mode.ProtocolVersion.SupportsBrightnessAndSaveMode)
+                size += sizeof(uint) * 3;// BrightnessMin, BrightnessMax, Brightness
 
             return size;
         }

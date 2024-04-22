@@ -2,7 +2,7 @@ using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
-internal readonly record struct ColorsReader : ISpanReader<Color[]>
+internal readonly struct ColorsReader : ISpanReader<Color[]>
 {
     public Color[] ReadFrom(ref SpanReader reader, ProtocolVersion? protocolVersion = default, int? index = default, int? outerCount = default)
     {

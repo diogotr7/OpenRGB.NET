@@ -2,6 +2,8 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -20,7 +22,7 @@ internal sealed class OpenRgbConnection : IDisposable
     public bool Connected => _socket.Connected;
 
     public ProtocolVersion CurrentProtocolVersion { get; private set; }
-    
+
     public EventHandler<EventArgs>? DeviceListUpdated { get; set; }
 
     public OpenRgbConnection(EventHandler<EventArgs>? OnDeviceListUpdated)
@@ -30,7 +32,7 @@ internal sealed class OpenRgbConnection : IDisposable
         _socket.NoDelay = true; //Send all data immediately, we rely on the order of packets
         _pendingRequests = Enum.GetValues(typeof(CommandId)).Cast<CommandId>()
             .ToDictionary(c => c, _ => new BlockingCollection<byte[]>());
-        
+
         DeviceListUpdated = OnDeviceListUpdated;
     }
 
@@ -77,6 +79,7 @@ internal sealed class OpenRgbConnection : IDisposable
                 {
                     var dataBuffer = new byte[header.DataLength];
                     await _socket.ReceiveAllAsync(dataBuffer, _cancellationTokenSource.Token);
+                    DebugDumpBuffer(dataBuffer, false, header.Command);
                     _pendingRequests[header.Command].Add(dataBuffer, _cancellationTokenSource.Token);
                 }
             }
@@ -105,6 +108,7 @@ internal sealed class OpenRgbConnection : IDisposable
 
         try
         {
+            DebugDumpBuffer(buffer, true, command);
             _socket.SendAll(buffer);
         }
         finally
@@ -112,7 +116,7 @@ internal sealed class OpenRgbConnection : IDisposable
             ArrayPool<byte>.Shared.Return(rent);
         }
     }
-    
+
     private TResult Receive<TReader, TResult>(CommandId command, uint deviceId) where TReader : struct, ISpanReader<TResult>
     {
         var reader = new SpanReader(_pendingRequests[command].Take(_cancellationTokenSource.Token));
@@ -136,7 +140,8 @@ internal sealed class OpenRgbConnection : IDisposable
 
         try
         {
-            version = Request<Args<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0, new Args<uint>(maxSupportedProtocolVersion));
+            version = Request<Args<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0,
+                new Args<uint>(maxSupportedProtocolVersion));
         }
         catch (TimeoutException)
         {
@@ -163,5 +168,20 @@ internal sealed class OpenRgbConnection : IDisposable
         _cancellationTokenSource.Dispose();
         _socket.Dispose();
         _readLoopTask?.Dispose();
+    }
+
+    [Conditional("DEBUG")]
+    private static void DebugDumpBuffer(ReadOnlySpan<byte> buffer, bool sending, CommandId command)
+    {
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenRGB.NET");
+        
+        if (!Directory.Exists(directory))
+            Directory.CreateDirectory(directory);
+        
+        var lastFileName = Directory.EnumerateFiles(directory).MaxBy(f => f);
+        var lastFileNumber = lastFileName is null ? -1 :
+            int.Parse(Path.GetFileNameWithoutExtension(lastFileName).Split('-')[0]);
+        
+        File.WriteAllBytes(Path.Combine(directory, $"{lastFileNumber + 1:D2}-{(sending ? "Send" : "Receive")}-{command}.bin"), buffer.ToArray());
     }
 }

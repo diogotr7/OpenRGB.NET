@@ -44,7 +44,7 @@ var updateTask = Task.Run(() =>
             client.UpdateLeds(index, slice);
         }
 
-        Thread.Sleep(1000 / fps);
+        Thread.Sleep(1000 / fps); 
     }
 });
 

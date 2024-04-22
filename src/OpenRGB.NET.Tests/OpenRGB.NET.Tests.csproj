@@ -24,5 +24,9 @@
   <ItemGroup>
     <ProjectReference Include="..\OpenRGB.NET\OpenRGB.NET.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="TestData\*.bin" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
 
 </Project>

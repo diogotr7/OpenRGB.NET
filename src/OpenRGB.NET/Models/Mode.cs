@@ -1,5 +1,4 @@
 ﻿using System;
-using OpenRGB.NET.Utils;
 
 namespace OpenRGB.NET;
 
@@ -8,7 +7,7 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Mode
 {
-    private Mode(ProtocolVersion protocolVersion, int index, string name, int value, ModeFlags flags, uint speedMin,
+    internal Mode(ProtocolVersion protocolVersion, int index, string name, int value, ModeFlags flags, uint speedMin,
         uint speedMax, uint brightnessMin, uint brightnessMax, uint colorMin, uint colorMax, uint speed, 
         uint brightness, Direction direction, ColorMode colorMode, Color[] colors)
     {
@@ -164,81 +163,5 @@ public class Mode
     public void SetColors(Color[] newColors)
     {
         Colors = newColors;
-    }
-
-    internal static Mode ReadFrom(ref SpanReader reader, ProtocolVersion protocolVersion, int index)
-    {
-        var name = reader.ReadLengthAndString();
-        var modeValue = reader.ReadInt32();
-        var modeFlags = (ModeFlags)reader.ReadUInt32();
-        var speedMin = reader.ReadUInt32();
-        var speedMax = reader.ReadUInt32();
-        var brightMin = protocolVersion.SupportsBrightnessAndSaveMode ? reader.ReadUInt32() : 0;
-        var brightMax = protocolVersion.SupportsBrightnessAndSaveMode ? reader.ReadUInt32() : 0;
-        var colorMin = reader.ReadUInt32();
-        var colorMax = reader.ReadUInt32();
-        var speed = reader.ReadUInt32();
-        var brightness = protocolVersion.SupportsBrightnessAndSaveMode ? reader.ReadUInt32() : 0;
-        var direction = reader.ReadUInt32();
-        var colorMode = (ColorMode)reader.ReadUInt32();
-        var colorCount = reader.ReadUInt16();
-        var colors = Color.ReadManyFrom(ref reader, colorCount);
-
-        return new Mode(protocolVersion, index, name, modeValue, modeFlags, speedMin, speedMax,
-            brightMin, brightMax, colorMin, colorMax, speed, brightness,
-            (Direction)direction, colorMode, colors);
-    }
-
-    internal static Mode[] ReadManyFrom(ref SpanReader reader, ushort numModes, ProtocolVersion protocolVersion)
-    {
-        var modes = new Mode[numModes];
-
-        for (var i = 0; i < numModes; i++)
-            modes[i] = ReadFrom(ref reader, protocolVersion, i);
-
-        return modes;
-    }
-
-    internal void WriteTo(ref SpanWriter writer)
-    {
-        writer.WriteLengthAndString(Name);
-        writer.WriteInt32(Value);
-        writer.WriteUInt32((uint)Flags);
-        writer.WriteUInt32(SpeedMin);
-        writer.WriteUInt32(SpeedMax);
-
-        if (ProtocolVersion.SupportsBrightnessAndSaveMode)
-        {
-            writer.WriteUInt32(BrightnessMin);
-            writer.WriteUInt32(BrightnessMax);
-        }
-
-        writer.WriteUInt32(ColorMin);
-        writer.WriteUInt32(ColorMax);
-        writer.WriteUInt32(Speed);
-
-        if (ProtocolVersion.SupportsBrightnessAndSaveMode)
-            writer.WriteUInt32(Brightness);
-
-        writer.WriteUInt32((uint)Direction);
-        writer.WriteUInt32((uint)ColorMode);
-        writer.WriteUInt16((ushort)Colors.Length);
-
-        foreach (var color in Colors)
-            color.WriteTo(ref writer);
-    }
-
-    internal int GetLength()
-    {
-        var size = (
-            sizeof(int) * 2 +
-            sizeof(uint) * 9 +
-            sizeof(ushort) * 2 +
-            sizeof(uint) * Colors.Length +
-            Name.Length + 1);
-
-        if (ProtocolVersion.SupportsBrightnessAndSaveMode) size += sizeof(uint) * 3;
-
-        return size;
     }
 }

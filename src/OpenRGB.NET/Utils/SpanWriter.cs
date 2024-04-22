@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace OpenRGB.NET.Utils;
@@ -11,41 +12,30 @@ internal ref struct SpanWriter(Span<byte> span)
 {
     public Span<byte> Span { get; } = span;
     public int Position { get; private set; } = 0;
-
-    public void WriteUInt16(ushort value)
+    
+    public void Write<T>(T value) where T : unmanaged
     {
-        BinaryPrimitives.WriteUInt16LittleEndian(Span[Position..], value);
-        Position += sizeof(ushort);
+        MemoryMarshal.Write(Span[Position..], in value);
+        Position += Unsafe.SizeOf<T>();
     }
 
-    public void WriteInt32(int value)
-    {
-        BinaryPrimitives.WriteInt32LittleEndian(Span[Position..], value);
-        Position += sizeof(int);
-    }
-
-    public void WriteUInt32(uint value)
-    {
-        BinaryPrimitives.WriteUInt32LittleEndian(Span[Position..], value);
-        Position += sizeof(uint);
-    }
-
-    public void WriteBytes(ReadOnlySpan<byte> span)
+    public void Write(ReadOnlySpan<byte> span)
     {
         span.CopyTo(Span[Position..]);
         Position += span.Length;
     }
 
-    public void WriteByte(byte value)
-    {
-        Span[Position] = value;
-        Position += sizeof(byte);
-    }
-
     public void WriteLengthAndString(string value)
     {
-        WriteUInt16((ushort)(value.Length + 1));
-        WriteBytes(Encoding.ASCII.GetBytes(value));
-        WriteByte(0);
+        Write((ushort)(value.Length + 1));
+        Write(value);
+    }
+    
+    public void Write(string value)
+    {
+        var byteCount = Encoding.ASCII.GetByteCount(value.AsSpan());
+        Encoding.ASCII.GetBytes(value, Span.Slice(Position, byteCount));
+        Position += byteCount;
+        Write<byte>(0);
     }
 }

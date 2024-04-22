@@ -1,6 +1,3 @@
-using System;
-using OpenRGB.NET.Utils;
-
 namespace OpenRGB.NET;
 
 /// <summary>
@@ -8,7 +5,7 @@ namespace OpenRGB.NET;
 /// </summary>
 public class Zone
 {
-    private Zone(int index, int deviceIndex, string name, ZoneType type, uint ledCount, uint ledsMin, uint ledsMax, MatrixMap? matrixMap, Segment[] segments)
+    internal Zone(int index, int deviceIndex, string name, ZoneType type, uint ledCount, uint ledsMin, uint ledsMax, MatrixMap? matrixMap, Segment[] segments)
     {
         Index = index;
         DeviceIndex = deviceIndex;
@@ -65,39 +62,4 @@ public class Zone
     ///     A list of segments in the zone. Will be null if protocol version is below 4.
     /// </summary>
     public Segment[] Segments { get; }
-
-    private static Zone ReadFrom(ref SpanReader reader, int deviceIndex, int zoneIndex, ProtocolVersion protocolVersion)
-    {
-        var name = reader.ReadLengthAndString();
-        var type = (ZoneType)reader.ReadUInt32();
-        var ledsMin = reader.ReadUInt32();
-        var ledsMax = reader.ReadUInt32();
-        var ledCount = reader.ReadUInt32();
-        var zoneMatrixLength = reader.ReadUInt16();
-        var matrixMap = zoneMatrixLength > 0 ? MatrixMap.ReadFrom(ref reader) : null;
-        var segments = protocolVersion.SupportsSegmentsAndPlugins ? Segment.ReadManyFrom(ref reader, reader.ReadUInt16()) : Array.Empty<Segment>();
-
-        return new Zone(zoneIndex, deviceIndex, name, type, ledCount, ledsMin, ledsMax, matrixMap, segments);
-    }
-
-    internal static Zone[] ReadManyFrom(ref SpanReader reader, ushort zoneCount, int deviceID, ProtocolVersion protocolVersion)
-    {
-        var zones = new Zone[zoneCount];
-
-        for (var i = 0; i < zoneCount; i++)
-            zones[i] = ReadFrom(ref reader, deviceID, i, protocolVersion);
-
-        return zones;
-    }
-
-    internal void WriteTo(ref SpanWriter writer)
-    {
-        writer.WriteLengthAndString(Name);
-        writer.WriteUInt32((uint)Type);
-        writer.WriteUInt32(LedsMin);
-        writer.WriteUInt32(LedsMax);
-        writer.WriteUInt32(LedCount);
-        writer.WriteUInt16((ushort)(MatrixMap?.Length ?? 0));
-        MatrixMap?.WriteTo(ref writer);
-    }
 }

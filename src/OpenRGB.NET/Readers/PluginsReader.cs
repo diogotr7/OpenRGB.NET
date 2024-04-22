@@ -4,11 +4,11 @@ namespace OpenRGB.NET;
 
 internal readonly struct PluginsReader : ISpanReader<Plugin[]>
 {
-    public Plugin[] ReadFrom(ref SpanReader reader, ProtocolVersion? p = default, int? i = default, int? outerCount = default)
+    public static Plugin[] ReadFrom(ref SpanReader reader, ProtocolVersion? p = default, int? i = default, int? outerCount = default)
     {
         // ReSharper disable once UnusedVariable
         var dataSize = reader.Read<uint>();
-        
+
         var count = reader.Read<ushort>();
         var plugins = new Plugin[count];
         for (var j = 0; j < count; j++)

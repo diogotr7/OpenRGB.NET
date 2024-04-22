@@ -113,20 +113,19 @@ internal sealed class OpenRgbConnection : IDisposable
         }
     }
     
-    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId, TReader tReader) where TReader : struct, ISpanReader<TResult>
+    private TResult Receive<TReader, TResult>(CommandId command, uint deviceId) where TReader : struct, ISpanReader<TResult>
     {
         var reader = new SpanReader(_pendingRequests[command].Take(_cancellationTokenSource.Token));
         //this deviceId here is a bit hacky, it's used because some Models store their own index
-        return tReader.ReadFrom(ref reader, CurrentProtocolVersion, (int)deviceId);
+        return TReader.ReadFrom(ref reader, CurrentProtocolVersion, (int)deviceId);
     }
 
-    public TResult Request<TArgument, TReader, TResult>(CommandId command, uint deviceId, TArgument requestData, TReader tReader = default,
-        ReadOnlySpan<byte> additionalData = default)
+    public TResult Request<TArgument, TReader, TResult>(CommandId command, uint deviceId, TArgument requestData, ReadOnlySpan<byte> additionalData = default)
         where TArgument : ISpanWritable
         where TReader : struct, ISpanReader<TResult>
     {
         Send(command, deviceId, requestData, additionalData);
-        return Receive<TReader, TResult>(command, deviceId, tReader);
+        return Receive<TReader, TResult>(command, deviceId);
     }
 
     private uint NegotiateProtocolVersion(uint maxSupportedProtocolVersion)
@@ -137,8 +136,7 @@ internal sealed class OpenRgbConnection : IDisposable
 
         try
         {
-            version = Request<Args<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0,
-                new Args<uint>(maxSupportedProtocolVersion), new PrimitiveReader<uint>());
+            version = Request<Args<uint>, PrimitiveReader<uint>, uint>(CommandId.RequestProtocolVersion, 0, new Args<uint>(maxSupportedProtocolVersion));
         }
         catch (TimeoutException)
         {

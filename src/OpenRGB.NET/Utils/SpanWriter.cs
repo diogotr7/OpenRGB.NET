@@ -14,7 +14,7 @@ internal unsafe ref struct SpanWriter(Span<byte> span)
     
     public void Write<T>(T value) where T : unmanaged
     {
-        MemoryMarshal.Write(Span[Position..], ref value);
+        MemoryMarshal.Write(Span[Position..], in value);
         Position += sizeof(T);
     }
 

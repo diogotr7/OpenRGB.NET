@@ -4,7 +4,8 @@ namespace OpenRGB.NET;
 
 internal readonly struct MatrixMapReader : ISpanReader<MatrixMap>
 {
-    public MatrixMap ReadFrom(ref SpanReader reader, ProtocolVersion? protocolVersion = default, int? index = default, int? outerCount = default)
+    public static MatrixMap ReadFrom(ref SpanReader reader, ProtocolVersion? protocolVersion = default, int? index = default,
+        int? outerCount = default)
     {
         var height = reader.Read<uint>();
         var width = reader.Read<uint>();

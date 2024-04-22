@@ -4,7 +4,8 @@ namespace OpenRGB.NET;
 
 internal readonly struct SegmentsReader : ISpanReader<Segment[]>
 {
-    public Segment[] ReadFrom(ref SpanReader reader, ProtocolVersion? protocolVersion = default, int? index = default, int? outerCount = default)
+    public static Segment[] ReadFrom(ref SpanReader reader, ProtocolVersion? protocolVersion = default, int? index = default,
+        int? outerCount = default)
     {
         var segmentCount = reader.Read<ushort>();
         var segments = new Segment[segmentCount];

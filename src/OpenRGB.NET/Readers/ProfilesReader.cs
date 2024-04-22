@@ -4,11 +4,11 @@ namespace OpenRGB.NET;
 
 internal readonly struct ProfilesReader : ISpanReader<string[]>
 {
-    public string[] ReadFrom(ref SpanReader reader, ProtocolVersion? p = default, int? i = default, int? outerCount = default)
+    public static string[] ReadFrom(ref SpanReader reader, ProtocolVersion? p = default, int? i = default, int? outerCount = default)
     {
         // ReSharper disable once UnusedVariable
         var dataSize = reader.Read<uint>();
-        
+
         var count = reader.Read<ushort>();
         var profiles = new string[count];
         for (var j = 0; j < count; j++)

@@ -15,7 +15,6 @@
         <PackageProjectUrl>https://github.com/diogotr7/OpenRGB.NET</PackageProjectUrl>
         <RepositoryUrl>https://github.com/diogotr7/OpenRGB.NET</RepositoryUrl>
         <PackageTags>openrgb, rgb, sdk, client</PackageTags>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     
     <ItemGroup>

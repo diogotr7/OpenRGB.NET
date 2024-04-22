@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -6,7 +7,7 @@ namespace OpenRGB.NET.Utils;
 #if DEBUG
 [NonCopyable]
 #endif
-internal unsafe ref struct SpanReader(ReadOnlySpan<byte> span)
+internal ref struct SpanReader(ReadOnlySpan<byte> span)
 {
     private ReadOnlySpan<byte> Span { get; } = span;
     private int Position { get; set; } = 0;
@@ -14,7 +15,7 @@ internal unsafe ref struct SpanReader(ReadOnlySpan<byte> span)
     internal T Read<T>() where T : unmanaged
     {
         var value = MemoryMarshal.Read<T>(Span[Position..]);
-        Position += sizeof(T);
+        Position += Unsafe.SizeOf<T>();
         return value;
     }
     

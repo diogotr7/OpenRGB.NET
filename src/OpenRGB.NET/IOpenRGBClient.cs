@@ -16,7 +16,7 @@ public interface IOpenRgbClient
     ///     The maximum protocol version this implementation supports
     /// </summary>
     ProtocolVersion MaxSupportedProtocolVersion { get; }
-
+    
     /// <summary>
     ///     The protocol version to be used by this instance of <see cref="IOpenRgbClient" />
     /// </summary>

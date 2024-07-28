@@ -6,7 +6,6 @@ namespace OpenRGB.NET;
 internal readonly record struct UpdateLedsArg(ushort ColorCount) : ISpanWritable
 {
     public int Length => sizeof(uint) +
-                         sizeof(uint) +
                          sizeof(ushort);
     
     public void WriteTo(ref SpanWriter writer)

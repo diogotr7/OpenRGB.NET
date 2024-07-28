@@ -21,7 +21,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
     /// <inheritdoc />
     public ProtocolVersion MaxSupportedProtocolVersion => ProtocolVersion.FromNumber(MaxProtocolNumber);
-    
+
     /// <inheritdoc />
     public ProtocolVersion ClientProtocolVersion => ProtocolVersion.FromNumber(_protocolVersionNumber);
 
@@ -130,7 +130,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
 
-        _connection.Send(CommandId.UpdateLeds, (uint)deviceId, new Args<uint, ushort>(0, (ushort)colors.Length), bytes);
+        _connection.Send(CommandId.UpdateLeds, (uint)deviceId, new UpdateLedsArg((ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -147,7 +147,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var bytes = MemoryMarshal.Cast<Color, byte>(colors);
 
-        _connection.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new Args<uint, uint, ushort>(0, (uint)zoneId, (ushort)colors.Length), bytes);
+        _connection.Send(CommandId.UpdateZoneLeds, (uint)deviceId, new UpdateZoneLedsArg((uint)zoneId, (ushort)colors.Length), bytes);
     }
 
     /// <inheritdoc />
@@ -223,7 +223,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             targetMode.SetColors(colors);
         }
 
-        _connection.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperationArg(0, (uint)modeId, new ModeArg(targetMode)));
+        _connection.Send(CommandId.UpdateMode, (uint)deviceId, new ModeOperationArg((uint)modeId, new ModeArg(targetMode)));
     }
 
     /// <inheritdoc />
@@ -236,7 +236,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 
         var targetMode = targetDevice.Modes[modeId];
 
-        _connection.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperationArg(0, (uint)modeId, new ModeArg(targetMode)));
+        _connection.Send(CommandId.SaveMode, (uint)deviceId, new ModeOperationArg((uint)modeId, new ModeArg(targetMode)));
     }
 
     /// <inheritdoc />

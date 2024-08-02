@@ -23,9 +23,9 @@ internal sealed class OpenRgbConnection : IDisposable
 
     public ProtocolVersion CurrentProtocolVersion { get; private set; }
 
-    public EventHandler<EventArgs>? DeviceListUpdated { get; set; }
+    private OpenRgbClient Client { get; }
 
-    public OpenRgbConnection(EventHandler<EventArgs>? OnDeviceListUpdated)
+    public OpenRgbConnection(OpenRgbClient openRgbClient)
     {
         _cancellationTokenSource = new CancellationTokenSource();
         _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
@@ -33,7 +33,7 @@ internal sealed class OpenRgbConnection : IDisposable
         _pendingRequests = Enum.GetValues(typeof(CommandId)).Cast<CommandId>()
             .ToDictionary(c => c, _ => new BlockingCollection<byte[]>());
 
-        DeviceListUpdated = OnDeviceListUpdated;
+        Client = openRgbClient;
     }
 
     public void Connect(string name, string ip, int port, int timeoutMs, uint protocolVersionNumber = 4)
@@ -67,7 +67,7 @@ internal sealed class OpenRgbConnection : IDisposable
                     {
                         try
                         {
-                            DeviceListUpdated?.Invoke(this, EventArgs.Empty);
+                            Client.OnDeviceListUpdated();
                         }
                         catch
                         {

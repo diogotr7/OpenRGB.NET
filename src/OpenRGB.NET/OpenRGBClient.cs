@@ -47,7 +47,7 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         _name = name;
         _timeoutMs = timeoutMs;
         _protocolVersionNumber = protocolVersionNumber;
-        _connection = new OpenRgbConnection(DeviceListUpdated);
+        _connection = new OpenRgbConnection(this);
 
         if (protocolVersionNumber > MaxProtocolNumber)
             throw new ArgumentException("Client protocol version provided higher than supported.",
@@ -63,6 +63,11 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
             return;
 
         _connection.Connect(_name, _ip, _port, _timeoutMs, _protocolVersionNumber);
+    }
+
+    internal void OnDeviceListUpdated()
+    {
+        DeviceListUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     #region API

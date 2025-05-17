@@ -16,7 +16,7 @@ public interface IOpenRgbClient
     ///     The maximum protocol version this implementation supports
     /// </summary>
     ProtocolVersion MaxSupportedProtocolVersion { get; }
-    
+
     /// <summary>
     ///     The protocol version to be used by this instance of <see cref="IOpenRgbClient" />
     /// </summary>
@@ -29,6 +29,11 @@ public interface IOpenRgbClient
     ProtocolVersion CommonProtocolVersion { get; }
 
     /// <summary>
+    ///     Gets the name that identifies this client to the OpenRGB server.
+    /// </summary>
+    string ClientName { get; }
+
+    /// <summary>
     ///     Triggered when the device list updates
     /// </summary>
     event EventHandler<EventArgs>? DeviceListUpdated;
@@ -38,13 +43,19 @@ public interface IOpenRgbClient
     ///     with auto-connect set to false.
     /// </summary>
     void Connect();
-    
+
+    /// <summary>
+    ///     Sets a new client name and reconnects if already connected.
+    /// </summary>
+    /// <param name="newName">The new name to identify this client to the OpenRGB server</param>
+    void SetClientName(string newName);
+
     /// <summary>
     ///     Requests the controller count from the server.
     /// </summary>
     /// <returns>The amount of controllers.</returns>
     int GetControllerCount();
-    
+
     /// <summary>
     ///     Requests the data block for a given controller index.
     /// </summary>
@@ -81,13 +92,13 @@ public interface IOpenRgbClient
     /// </summary>
     /// <param name="profile"> Name of the profile to save</param>
     void SaveProfile(string profile);
-    
+
     /// <summary>
     ///     Requests the list of plugins from the server.
     /// </summary>
     /// <returns></returns>
     Plugin[] GetPlugins();
-    
+
     /// <summary>
     ///     Resizes the given zone to the given size.
     /// </summary>
@@ -95,7 +106,7 @@ public interface IOpenRgbClient
     /// <param name="zoneId"></param>
     /// <param name="size"></param>
     void ResizeZone(int deviceId, int zoneId, int size);
-    
+
     /// <summary>
     ///     Updates the LEDs for the given device.
     ///     Make sure the array has the correct number of LEDs.
@@ -103,7 +114,7 @@ public interface IOpenRgbClient
     /// <param name="deviceId"></param>
     /// <param name="colors"></param>
     void UpdateLeds(int deviceId, ReadOnlySpan<Color> colors);
-    
+
     /// <summary>
     ///     Updates the LEDs of a given device and zone.
     ///     Make sure the array has the correct number of LEDs for the zone.
@@ -112,7 +123,7 @@ public interface IOpenRgbClient
     /// <param name="zoneId"></param>
     /// <param name="colors"></param>
     void UpdateZoneLeds(int deviceId, int zoneId, ReadOnlySpan<Color> colors);
-    
+
     /// <summary>
     ///     Updates a single LED of a given device.
     /// </summary>
@@ -120,7 +131,7 @@ public interface IOpenRgbClient
     /// <param name="ledId">which led to update on the device</param>
     /// <param name="color">what color to set the led to</param>
     void UpdateSingleLed(int deviceId, int ledId, Color color);
-    
+
     /// <summary>
     ///     Sets the mode of the specified device to "Custom".
     /// </summary>

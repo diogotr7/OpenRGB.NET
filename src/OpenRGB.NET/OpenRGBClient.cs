@@ -8,13 +8,14 @@ namespace OpenRGB.NET;
 /// </summary>
 public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
 {
+    private readonly object _syncRoot = new object();
     private const int MaxProtocolNumber = 4;
-    private readonly string _name;
+    private string _name;
     private readonly string _ip;
     private readonly int _port;
     private readonly int _timeoutMs;
     private readonly uint _protocolVersionNumber;
-    private readonly OpenRgbConnection _connection;
+    private OpenRgbConnection _connection;
 
     /// <inheritdoc />
     public bool Connected => _connection.Connected;
@@ -29,12 +30,21 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
     public ProtocolVersion CommonProtocolVersion => _connection.CurrentProtocolVersion;
 
     /// <inheritdoc />
+    public string ClientName => _name;
+
+    /// <inheritdoc />
     public event EventHandler<EventArgs>? DeviceListUpdated;
 
     /// <summary>
     ///     Sets all the needed parameters to connect to the server.
     ///     Connects to the server immediately unless autoConnect is set to false.
     /// </summary>
+    /// <param name="ip">The IP address of the OpenRGB server. Defaults to localhost (127.0.0.1)</param>
+    /// <param name="port">The port of the OpenRGB server. Defaults to 6742</param>
+    /// <param name="name">The name to identify this client to the OpenRGB server. Default is "OpenRGB.NET"</param>
+    /// <param name="autoConnect">Whether to connect automatically upon creation. Defaults to true</param>
+    /// <param name="timeoutMs">Connection timeout in milliseconds. Defaults to 1000ms</param>
+    /// <param name="protocolVersionNumber">Protocol version to use. Defaults to the maximum supported version</param>
     public OpenRgbClient(string ip = "127.0.0.1",
         int port = 6742,
         string name = "OpenRGB.NET",
@@ -47,13 +57,44 @@ public sealed class OpenRgbClient : IDisposable, IOpenRgbClient
         _name = name;
         _timeoutMs = timeoutMs;
         _protocolVersionNumber = protocolVersionNumber;
-        _connection = new OpenRgbConnection(DeviceListUpdated);
+        _connection = CreateNewConnection();
 
         if (protocolVersionNumber > MaxProtocolNumber)
             throw new ArgumentException("Client protocol version provided higher than supported.",
                 nameof(protocolVersionNumber));
 
         if (autoConnect) Connect();
+    }
+
+    private OpenRgbConnection CreateNewConnection()
+    {
+        var connection = new OpenRgbConnection(DeviceListUpdated);
+        return connection;
+    }
+
+    /// <inheritdoc />
+    public void SetClientName(string newName)
+    {
+        if (string.IsNullOrEmpty(newName))
+            throw new ArgumentException("Client name cannot be null or empty", nameof(newName));
+
+        lock (_syncRoot)
+        {
+            bool wasConnected = Connected;
+
+            if (wasConnected)
+            {
+                _connection.Dispose();
+            }
+
+            _name = newName;
+            _connection = CreateNewConnection();
+
+            if (wasConnected)
+            {
+               Connect();
+            }
+        }
     }
 
     /// <inheritdoc />
